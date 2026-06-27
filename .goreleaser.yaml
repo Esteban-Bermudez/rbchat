@@ -1,0 +1,29 @@
+version: 2
+project_name: rbchat
+builds:
+  - id: rbchat
+    main: ./cmd/rbchat
+    binary: rbchat
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: linux
+        goarch: arm64
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: '{{ .Tag }}-next'
+changelog:
+  disable: true
