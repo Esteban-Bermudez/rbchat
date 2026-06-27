@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -20,28 +19,8 @@ const (
 )
 
 func (m Model) Init() tea.Cmd {
-	listener, err := network.NewListener(multicastAddr)
-	if err != nil {
-		return tea.Quit
-	}
-	m.listener = listener
-
-	broadcaster, err := network.NewBroadcaster(multicastAddr)
-	if err != nil {
-		return tea.Quit
-	}
-	m.broadcaster = broadcaster
-
-	msgCh := make(chan network.IncomingMessage, 100)
-	m.msgCh = msgCh
-	ctx, cancel := context.WithCancel(context.Background())
-	m.ctx = ctx
-	m.cancel = cancel
-
-	go m.listener.Listen(ctx, msgCh)
-
 	q := db.New(m.db)
-	last50, err := q.GetRecentMessagesToday(ctx, 50)
+	last50, err := q.GetRecentMessagesToday(m.ctx, 50)
 	if err == nil {
 		for i := len(last50) - 1; i >= 0; i-- {
 			dbMsg := last50[i]
@@ -68,7 +47,7 @@ func (m Model) Init() tea.Cmd {
 	})
 
 	return tea.Batch(
-		WaitForNetworkMsg(msgCh),
+		WaitForNetworkMsg(m.msgCh),
 		tea.Tick(syncTimeout, func(t time.Time) tea.Msg {
 			return SyncTimeoutMsg{}
 		}),

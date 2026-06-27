@@ -68,19 +68,24 @@ type Model struct {
 	ready       bool
 }
 
-func NewModel(db *sql.DB, username, team string) Model {
+func NewModel(db *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc) Model {
 	ti := textinput.New()
 	ti.Placeholder = "Type a message..."
 	ti.Focus()
 
 	return Model{
-		db:       db,
-		username: username,
-		team:     team,
-		messages: make([]network.Message, 0, 100),
-		input:    ti,
-		syncing:  true,
-		lastSeen: make(map[string]time.Time),
-		seenIDs:  make(map[string]struct{}),
+		db:          db,
+		username:    username,
+		team:        team,
+		listener:    listener,
+		broadcaster: broadcaster,
+		msgCh:       msgCh,
+		ctx:         ctx,
+		cancel:      cancel,
+		messages:    make([]network.Message, 0, 100),
+		input:       ti,
+		syncing:     true,
+		lastSeen:    make(map[string]time.Time),
+		seenIDs:     make(map[string]struct{}),
 	}
 }
