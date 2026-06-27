@@ -4,6 +4,12 @@ Zero-configuration LAN chat over UDP multicast. No server, no sign-up, no intern
 
 ## Install
 
+### One-liner (macOS, Linux)
+
+```sh
+curl -fL https://raw.githubusercontent.com/Esteban-Bermudez/rbchat/main/install.sh | sh
+```
+
 ### From source
 
 ```sh
