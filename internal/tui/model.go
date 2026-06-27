@@ -11,6 +11,12 @@ import (
 	"github.com/esteban/rbchat/internal/network"
 )
 
+func GetTeams() []string {
+	result := make([]string, len(teams))
+	copy(result, teams)
+	return result
+}
+
 var teams = []string{
 	"Animoto",
 	"Delivra",

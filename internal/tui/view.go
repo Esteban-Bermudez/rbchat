@@ -72,6 +72,10 @@ func (m Model) View() string {
 	return title + chatContent + "\n" + inputField
 }
 
+func RenderMessage(msg network.Message) string {
+	return renderMessage(msg)
+}
+
 func renderMessage(msg network.Message) string {
 	switch msg.Type {
 	case "join":
