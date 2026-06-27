@@ -99,4 +99,9 @@ detect_os_arch
 fetch_latest_version
 download_and_install
 
+case ":$PATH:" in
+  *:"$INSTALL_DIR":*) ;;
+  *) echo "Add $INSTALL_DIR to your PATH: export PATH=\"\$HOME/.local/bin:\$PATH\"" ;;
+esac
+
 echo "Run '$BIN' to start."
