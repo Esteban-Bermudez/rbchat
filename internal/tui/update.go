@@ -19,24 +19,6 @@ const (
 )
 
 func (m Model) Init() tea.Cmd {
-	q := db.New(m.db)
-	last50, err := q.GetRecentMessagesToday(m.ctx, 50)
-	if err == nil {
-		for i := len(last50) - 1; i >= 0; i-- {
-			dbMsg := last50[i]
-			msg := network.Message{
-				Type:      dbMsg.Type,
-				Username:  dbMsg.Username,
-				Team:      dbMsg.Team,
-				Text:      dbMsg.Text,
-				Timestamp: dbMsg.Timestamp,
-				MessageID: dbMsg.MessageID,
-			}
-			m.seenIDs[msg.MessageID] = struct{}{}
-			m.messages = append(m.messages, msg)
-		}
-	}
-
 	m.broadcaster.Send(network.Message{
 		Type:      "sync",
 		Username:  m.username,

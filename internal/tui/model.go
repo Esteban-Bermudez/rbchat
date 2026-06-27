@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/esteban/rbchat/internal/db"
 	"github.com/esteban/rbchat/internal/network"
 )
 
@@ -69,13 +70,34 @@ type Model struct {
 	notificationsEnabled bool
 }
 
-func NewModel(db *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool) Model {
+func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool) Model {
 	ti := textinput.New()
 	ti.Placeholder = "Type a message..."
 	ti.Focus()
 
+	messages := make([]network.Message, 0, 100)
+	seenIDs := make(map[string]struct{})
+
+	q := db.New(database)
+	last50, err := q.GetRecentMessagesToday(ctx, 50)
+	if err == nil {
+		for i := len(last50) - 1; i >= 0; i-- {
+			dbMsg := last50[i]
+			msg := network.Message{
+				Type:      dbMsg.Type,
+				Username:  dbMsg.Username,
+				Team:      dbMsg.Team,
+				Text:      dbMsg.Text,
+				Timestamp: dbMsg.Timestamp,
+				MessageID: dbMsg.MessageID,
+			}
+			seenIDs[msg.MessageID] = struct{}{}
+			messages = append(messages, msg)
+		}
+	}
+
 	return Model{
-		db:                   db,
+		db:                   database,
 		username:             username,
 		team:                 team,
 		listener:             listener,
@@ -83,11 +105,11 @@ func NewModel(db *sql.DB, username, team string, listener *network.Listener, bro
 		msgCh:                msgCh,
 		ctx:                  ctx,
 		cancel:               cancel,
-		messages:             make([]network.Message, 0, 100),
+		messages:             messages,
+		seenIDs:              seenIDs,
 		input:                ti,
 		syncing:              true,
 		lastSeen:             make(map[string]time.Time),
-		seenIDs:              make(map[string]struct{}),
 		notificationsEnabled: notificationsEnabled,
 	}
 }
