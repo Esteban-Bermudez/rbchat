@@ -7,8 +7,10 @@ Zero-configuration LAN chat over UDP multicast. No server, no sign-up, no intern
 ### One-liner (macOS, Linux)
 
 ```sh
-curl -fL https://raw.githubusercontent.com/Esteban-Bermudez/rbchat/main/install.sh | sh
+curl -sfL https://raw.githubusercontent.com/Esteban-Bermudez/rbchat/main/install.sh | sh
 ```
+
+Installs to `~/.local/bin/rbchat`. Make sure `~/.local/bin` is on your `PATH` (add `export PATH="$HOME/.local/bin:$PATH"` to your shell profile if not).
 
 ### From source
 

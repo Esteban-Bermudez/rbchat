@@ -3,7 +3,7 @@ set -eu
 
 REPO="Esteban-Bermudez/rbchat"
 BIN="rbchat"
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 
 detect_os_arch() {
   OS=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -87,16 +87,9 @@ download_and_install() {
   esac
 
   if [ -f "$BIN" ]; then
-    if [ -w "$INSTALL_DIR" ]; then
-      mv "$BIN" "$INSTALL_DIR/$BIN"
-      echo "Installed $BIN to $INSTALL_DIR/$BIN"
-    else
-      sh -c "mv '$BIN' '$INSTALL_DIR/$BIN'" 2>/dev/null || {
-        echo "Need sudo to install to $INSTALL_DIR."
-        sudo mv "$BIN" "$INSTALL_DIR/$BIN"
-        echo "Installed $BIN to $INSTALL_DIR/$BIN"
-      }
-    fi
+    mkdir -p "$INSTALL_DIR"
+    mv "$BIN" "$INSTALL_DIR/$BIN"
+    echo "Installed $BIN to $INSTALL_DIR/$BIN"
   fi
 
   rm -rf "$TMPDIR"
