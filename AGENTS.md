@@ -49,6 +49,11 @@ sqlc.yaml
 4. **Sync protocol** — startup sync request + multicast history reply
 5. **CI/CD** — GoReleaser + GitHub Actions
 
+## Documentation
+- **Keep docs in sync with code.** Whenever you change a behavior, data structure, or design decision, update `CONTEXT.md` (domain glossary) and `rbchat-plan.md` (architecture plan) in the same commit.
+- `CONTEXT.md` is the source of truth for resolved design decisions and domain language.
+- `rbchat-plan.md` should reflect the current architecture, not aspirational plans. Stale plans cause confusion — fix them as you go.
+
 ## Git conventions
 - Follow https://cbea.ms/git-commit/: short subject (≤50 chars), blank line, body with motivation. No semantic prefixes ("feat:", "fix:", etc.) and no co-author trailers.
 - Commit frequently, one logical change per commit. Every commit must compile and run (no WIP / broken intermediate states).

@@ -1,7 +1,15 @@
 # rbchat Domain Glossary
 
 ## User
-A person using rbchat. Identified by a **Username** and a **Team**.
+A person using rbchat. Identified by a **Username** and a **Team**. Persisted locally.
+
+## Desktop notifications
+Sent via `beeep.Notify` for incoming chat messages from other users. Toggle at runtime with Ctrl+N (updates `Model.notificationsEnabled`). Disable entirely at startup with `--no-notify` flag (skips `Model.notificationsEnabled` initialization). Indicator shown in the title bar: 🔔 (green) when enabled, 🔕 (red) when disabled.
+
+## Title bar
+Three concatenated lipgloss-styled segments, each independently setting the purple background (#7C3AED), to prevent ANSI-reset gaps from the bell emoji breaking the background color for the peer count.
+
+Segments: `left = "rbchat | {addr} | "`, `middle = bellStyle.Render("🔔"/"🔕")`, `right = " | {n} peers"`.
 
 ## Username
 A display name chosen by the User on first launch. Persisted locally.
@@ -76,4 +84,4 @@ If a send fails, a red `[Error] Failed to send message` line is rendered briefly
 Ctrl+C in the Bubble Tea view → display "Shutting down..." → cancel the listener goroutine's context → close UDP connections → close DB → `tea.Quit`.
 
 ## Peer tracking
-"Peers online" count is the number of unique message senders seen within the last 60 seconds. No heartbeats, no persistent connections — purely derived from recent chat activity.
+"Peers online" count is the number of unique message senders seen within the last 60 seconds. Only `chat` and `join` messages update the timer — `sync` messages (history replays) are excluded to prevent stale peers from appearing online.
