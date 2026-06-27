@@ -24,6 +24,13 @@ func dataDir() string {
 }
 
 func main() {
+	notificationsEnabled := true
+	for _, arg := range os.Args[1:] {
+		if arg == "--no-notify" {
+			notificationsEnabled = false
+		}
+	}
+
 	dd := dataDir()
 	database, err := db.Init(dd)
 	if err != nil {
@@ -53,7 +60,7 @@ func main() {
 	msgCh := make(chan network.IncomingMessage, 100)
 	ctx, cancel := context.WithCancel(context.Background())
 
-	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel)
+	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel, notificationsEnabled)
 
 	go listener.Listen(ctx, msgCh)
 

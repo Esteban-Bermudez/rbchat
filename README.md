@@ -34,6 +34,8 @@ On first launch you'll be prompted for a username and team. After that, you're i
 
 - Type a message and press Enter to send
 - Ctrl+C to quit
+- Ctrl+N to toggle desktop notifications on/off
+- `--no-notify` to disable notifications at startup
 - Messages are persisted locally in `~/.local/share/rbchat/rbchat.db`
 - Joining peers automatically sync the last 50 messages from today
 

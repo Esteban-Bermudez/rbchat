@@ -58,12 +58,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		if !m.ready {
-			m.viewport = viewport.New(msg.Width, msg.Height-3)
+			m.viewport = viewport.New(msg.Width, msg.Height-5)
 			m.viewport.YPosition = 0
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - 3
+			m.viewport.Height = msg.Height - 5
 		}
 		m.input.Width = msg.Width - 2
 		return m, nil
@@ -77,6 +77,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			m.err = fmt.Errorf("Shutting down...")
 			return m, tea.Quit
+		case "ctrl+n":
+			m.notificationsEnabled = !m.notificationsEnabled
+			return m, nil
 		case "enter":
 			if m.syncing {
 				return m, nil
@@ -194,6 +197,9 @@ func (m *Model) handleIncoming(msg network.Message) {
 		m.dbInsertMessage(msg)
 		if !m.syncing {
 			m.refreshViewport()
+		}
+		if m.notificationsEnabled && msg.Username != m.username {
+			notify(msg.Username, msg.Team, msg.Text)
 		}
 		return
 	}

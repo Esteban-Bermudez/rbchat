@@ -48,44 +48,46 @@ func WaitForNetworkMsg(ch <-chan network.IncomingMessage) tea.Cmd {
 }
 
 type Model struct {
-	db          *sql.DB
-	listener    *network.Listener
-	broadcaster *network.Broadcaster
-	username    string
-	team        string
-	messages    []network.Message
-	viewport    viewport.Model
-	input       textinput.Model
-	peerCount   int
-	syncing     bool
-	msgCh       chan network.IncomingMessage
-	ctx         context.Context
-	cancel      context.CancelFunc
-	err         error
-	quitting    bool
-	lastSeen    map[string]time.Time
-	seenIDs     map[string]struct{}
-	ready       bool
+	db                   *sql.DB
+	listener             *network.Listener
+	broadcaster          *network.Broadcaster
+	username             string
+	team                 string
+	messages             []network.Message
+	viewport             viewport.Model
+	input                textinput.Model
+	peerCount            int
+	syncing              bool
+	msgCh                chan network.IncomingMessage
+	ctx                  context.Context
+	cancel               context.CancelFunc
+	err                  error
+	quitting             bool
+	lastSeen             map[string]time.Time
+	seenIDs              map[string]struct{}
+	ready                bool
+	notificationsEnabled bool
 }
 
-func NewModel(db *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc) Model {
+func NewModel(db *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool) Model {
 	ti := textinput.New()
 	ti.Placeholder = "Type a message..."
 	ti.Focus()
 
 	return Model{
-		db:          db,
-		username:    username,
-		team:        team,
-		listener:    listener,
-		broadcaster: broadcaster,
-		msgCh:       msgCh,
-		ctx:         ctx,
-		cancel:      cancel,
-		messages:    make([]network.Message, 0, 100),
-		input:       ti,
-		syncing:     true,
-		lastSeen:    make(map[string]time.Time),
-		seenIDs:     make(map[string]struct{}),
+		db:                   db,
+		username:             username,
+		team:                 team,
+		listener:             listener,
+		broadcaster:          broadcaster,
+		msgCh:                msgCh,
+		ctx:                  ctx,
+		cancel:               cancel,
+		messages:             make([]network.Message, 0, 100),
+		input:                ti,
+		syncing:              true,
+		lastSeen:             make(map[string]time.Time),
+		seenIDs:              make(map[string]struct{}),
+		notificationsEnabled: notificationsEnabled,
 	}
 }

@@ -36,6 +36,15 @@ var (
 	syncStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FBBF24")).
 			Bold(true)
+
+	helpStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#6B7280"))
+
+	bellOnStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#10B981"))
+
+	bellOffStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#EF4444"))
 )
 
 func (m Model) View() string {
@@ -53,7 +62,13 @@ func (m Model) View() string {
 		return "\n  Loading...\n"
 	}
 
-	title := titleStyle.Render(fmt.Sprintf(" rbchat | %s | %d peers online ", multicastAddr, m.peerCount))
+	var bell string
+	if m.notificationsEnabled {
+		bell = bellOnStyle.Render("🔔")
+	} else {
+		bell = bellOffStyle.Render("🔕")
+	}
+	title := titleStyle.Render(fmt.Sprintf(" rbchat | %s | %s | %d peers ", multicastAddr, bell, m.peerCount))
 	title += "\n"
 
 	separator := strings.Repeat("─", m.viewport.Width)
@@ -64,9 +79,8 @@ func (m Model) View() string {
 	var inputField string
 	if m.err != nil {
 		inputField = errorStyle.Render(fmt.Sprintf("⚠ %v", m.err)) + "\n"
-	} else {
-		inputField += "\n"
 	}
+	inputField += helpStyle.Render("ctrl+n: toggle notifications") + "\n"
 	inputField += m.input.View()
 
 	return title + chatContent + "\n" + inputField
