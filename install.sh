@@ -39,6 +39,8 @@ fetch_latest_version() {
     echo "Could not fetch latest version."
     exit 1
   fi
+  # strip leading v so archive names match (v0.1.1 -> 0.1.1)
+  VERSION="${VERSION#v}"
 }
 
 download_and_install() {
@@ -47,7 +49,7 @@ download_and_install() {
     windows) EXT="zip" ;;
   esac
 
-  ARCHIVE="${BIN}_${OS}_${ARCH}.${EXT}"
+  ARCHIVE="${BIN}_${VERSION}_${OS}_${ARCH}.${EXT}"
   URL="https://github.com/$REPO/releases/download/$VERSION/$ARCHIVE"
   CHECKSUM_URL="https://github.com/$REPO/releases/download/$VERSION/checksums.txt"
 
