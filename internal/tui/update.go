@@ -45,14 +45,16 @@ func (m Model) Init() tea.Cmd {
 	if err == nil {
 		for i := len(last50) - 1; i >= 0; i-- {
 			dbMsg := last50[i]
-			m.messages = append(m.messages, network.Message{
+			msg := network.Message{
 				Type:      dbMsg.Type,
 				Username:  dbMsg.Username,
 				Team:      dbMsg.Team,
 				Text:      dbMsg.Text,
 				Timestamp: dbMsg.Timestamp,
 				MessageID: dbMsg.MessageID,
-			})
+			}
+			m.seenIDs[msg.MessageID] = struct{}{}
+			m.messages = append(m.messages, msg)
 		}
 	}
 
@@ -137,6 +139,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case IncomingNetworkMsg:
 		m.handleIncoming(msg.Message)
+		if msg.Message.Type == "sync" && msg.Message.Text == "sync_request" {
+			m.respondToSync()
+		}
 		return m, WaitForNetworkMsg(m.msgCh)
 
 	case SyncTimeoutMsg:
@@ -161,12 +166,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m *Model) respondToSync() {
+	q := db.New(m.db)
+	messages, err := q.GetRecentMessagesForSync(m.ctx, 50)
+	if err != nil {
+		return
+	}
+	for _, dbMsg := range messages {
+		if dbMsg.Type == "sync" {
+			continue
+		}
+		m.broadcaster.Send(network.Message{
+			Type:      "sync",
+			Username:  dbMsg.Username,
+			Team:      dbMsg.Team,
+			Text:      dbMsg.Text,
+			Timestamp: dbMsg.Timestamp,
+			MessageID: dbMsg.MessageID,
+		})
+	}
+}
+
 func (m *Model) handleIncoming(msg network.Message) {
 	m.lastSeen[msg.Username] = time.Now()
 	m.peerCount = m.countActivePeers()
 
 	if msg.Type == "sync" {
+		m.appendMessage(msg)
 		m.dbInsertMessage(msg)
+		if !m.syncing {
+			m.refreshViewport()
+		}
 		return
 	}
 
@@ -191,6 +221,10 @@ func (m *Model) handleIncoming(msg network.Message) {
 }
 
 func (m *Model) appendMessage(msg network.Message) {
+	if _, seen := m.seenIDs[msg.MessageID]; seen {
+		return
+	}
+	m.seenIDs[msg.MessageID] = struct{}{}
 	if len(m.messages) >= maxMessages {
 		m.messages = m.messages[1:]
 	}

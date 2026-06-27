@@ -58,6 +58,7 @@ type Model struct {
 	err         error
 	quitting    bool
 	lastSeen    map[string]time.Time
+	seenIDs     map[string]struct{}
 	ready       bool
 }
 
@@ -74,5 +75,6 @@ func NewModel(db *sql.DB, username, team string) Model {
 		input:    ti,
 		syncing:  true,
 		lastSeen: make(map[string]time.Time),
+		seenIDs:  make(map[string]struct{}),
 	}
 }
