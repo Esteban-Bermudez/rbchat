@@ -41,10 +41,14 @@ var (
 			Foreground(lipgloss.Color("#6B7280"))
 
 	bellOnStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#10B981"))
+			Bold(true).
+			Foreground(lipgloss.Color("#10B981")).
+			Background(lipgloss.Color("#7C3AED"))
 
 	bellOffStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#EF4444"))
+			Bold(true).
+			Foreground(lipgloss.Color("#EF4444")).
+			Background(lipgloss.Color("#7C3AED"))
 )
 
 func (m Model) View() string {
@@ -68,7 +72,9 @@ func (m Model) View() string {
 	} else {
 		bell = bellOffStyle.Render("🔕")
 	}
-	title := titleStyle.Render(fmt.Sprintf(" rbchat | %s | %s | %d peers ", multicastAddr, bell, m.peerCount))
+	title := titleStyle.Render(fmt.Sprintf(" rbchat | %s | ", multicastAddr)) +
+		bell +
+		titleStyle.Render(fmt.Sprintf(" | %d peers ", m.peerCount))
 	title += "\n"
 
 	separator := strings.Repeat("─", m.viewport.Width)

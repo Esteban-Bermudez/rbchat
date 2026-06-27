@@ -152,9 +152,6 @@ func (m *Model) respondToSync() {
 }
 
 func (m *Model) handleIncoming(msg network.Message) {
-	m.lastSeen[msg.Username] = time.Now()
-	m.peerCount = m.countActivePeers()
-
 	if msg.Type == "sync" {
 		m.appendMessage(msg)
 		m.dbInsertMessage(msg)
@@ -168,6 +165,8 @@ func (m *Model) handleIncoming(msg network.Message) {
 		if m.syncing {
 			return
 		}
+		m.lastSeen[msg.Username] = time.Now()
+		m.peerCount = m.countActivePeers()
 		m.appendMessage(msg)
 		m.dbInsertMessage(msg)
 		m.refreshViewport()
@@ -175,6 +174,8 @@ func (m *Model) handleIncoming(msg network.Message) {
 	}
 
 	if msg.Type == "chat" {
+		m.lastSeen[msg.Username] = time.Now()
+		m.peerCount = m.countActivePeers()
 		m.appendMessage(msg)
 		m.dbInsertMessage(msg)
 		if !m.syncing {
