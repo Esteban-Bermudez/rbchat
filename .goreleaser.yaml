@@ -18,9 +18,11 @@ builds:
         goarch: arm64
 archives:
   - formats: [tar.gz]
+    wrap_in_directory: false
     format_overrides:
       - goos: windows
         formats: [zip]
+        wrap_in_directory: false
 checksum:
   name_template: 'checksums.txt'
 changelog:
