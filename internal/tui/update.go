@@ -116,14 +116,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		})
 		m.refreshViewport()
 
-		m.broadcaster.Send(network.Message{
-			Type:      "join",
-			Username:  m.username,
-			Team:      m.team,
-			Text:      "joined the network",
-			Timestamp: time.Now().UTC().Format(time.RFC3339),
-			MessageID: uuid.New().String(),
-		})
+		if !m.otherInstanceRunning {
+			m.broadcaster.Send(network.Message{
+				Type:      "join",
+				Username:  m.username,
+				Team:      m.team,
+				Text:      "joined the network",
+				Timestamp: time.Now().UTC().Format(time.RFC3339),
+				MessageID: uuid.New().String(),
+			})
+		}
 		return m, WaitForNetworkMsg(m.msgCh)
 
 	case SendFailedMsg:

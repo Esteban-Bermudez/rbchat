@@ -39,6 +39,17 @@ func main() {
 	}
 	defer database.Close()
 
+	lockPath := filepath.Join(dd, "rbchat.lock")
+	otherInstanceRunning := false
+	lf, err := os.OpenFile(lockPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
+	if err == nil {
+		fmt.Fprintf(lf, "%d", os.Getpid())
+		lf.Close()
+		defer os.Remove(lockPath)
+	} else {
+		otherInstanceRunning = true
+	}
+
 	username, team, err := tui.RunSetup(database)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Setup error: %v\n", err)
@@ -60,7 +71,7 @@ func main() {
 	msgCh := make(chan network.IncomingMessage, 100)
 	ctx, cancel := context.WithCancel(context.Background())
 
-	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel, notificationsEnabled)
+	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel, notificationsEnabled, otherInstanceRunning)
 
 	go listener.Listen(ctx, msgCh)
 
