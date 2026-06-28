@@ -13,7 +13,7 @@ var (
 	titleStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("#FFF")).
-			Background(lipgloss.Color("#7C3AED")).
+			Background(lipgloss.Color("#1A1B26")).
 			Padding(0, 1)
 
 	msgStyle = lipgloss.NewStyle().
@@ -39,12 +39,12 @@ var (
 	bellOnStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("#10B981")).
-			Background(lipgloss.Color("#7C3AED"))
+			Background(lipgloss.Color("#1A1B26"))
 
 	bellOffStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("#EF4444")).
-			Background(lipgloss.Color("#7C3AED"))
+			Background(lipgloss.Color("#1A1B26"))
 
 	dividerStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#6B7280"))

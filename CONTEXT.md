@@ -9,7 +9,7 @@ Sent via `beeep.Notify` for incoming chat messages from other users. Toggle at r
 ## Title bar
 Three concatenated lipgloss-styled segments, each independently setting the purple background (#7C3AED), to prevent ANSI-reset gaps from the bell emoji breaking the background color for the peer count.
 
-Segments: `left = "rbchat | {addr} | "`, `middle = bellStyle.Render("🔔"/"🔕")`, `right = " | {n} peers"`.
+Segments: `left = "rbchat | {addr} | "`, `middle = bellStyle.Render("🔔"/"🔕")`, `right = " | {n} peers"`. Background color is dark slate `#1A1B26`.
 
 ## Username
 A display name chosen by the User on first launch. Persisted locally.
