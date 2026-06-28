@@ -26,10 +26,6 @@ var (
 	errorStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FF4444"))
 
-	usernameStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#7C3AED")).
-			Bold(true)
-
 	timestampStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#6B7280"))
 
@@ -53,6 +49,24 @@ var (
 	dividerStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#6B7280"))
 )
+
+var teamColors = map[string]lipgloss.Color{
+	"Animoto":   "#FFD700",
+	"Delivra":   "#00CED1",
+	"Duplex":    "#FFA500",
+	"Leadpages": "#7C3AED",
+	"Paved":     "#10B981",
+	"Shift":     "#3B82F6",
+	"Redbrick":  "#EF4444",
+}
+
+func teamStyle(team string) lipgloss.Style {
+	c, ok := teamColors[team]
+	if !ok {
+		return lipgloss.NewStyle()
+	}
+	return lipgloss.NewStyle().Foreground(c)
+}
 
 func (m Model) View() string {
 	if m.quitting {
@@ -103,18 +117,25 @@ func renderMessage(msg network.Message) string {
 	switch msg.Type {
 	case "join":
 		t := parseTimestamp(msg.Timestamp)
-		return systemStyle.Render(fmt.Sprintf("[%s] %s (%s) %s",
-			t, msg.Username, msg.Team, msg.Text))
+		ts := timestampStyle.Render("[" + t + "]")
+		user := msg.Username
+		var teamPart string
+		if msg.Team != "" {
+			teamPart = teamStyle(msg.Team).Render(" (" + msg.Team + ")")
+		}
+		text := systemStyle.Render(" " + msg.Text)
+		return fmt.Sprintf("%s %s%s%s", ts, user, teamPart, text)
 
 	case "chat":
 		t := parseTimestamp(msg.Timestamp)
 		ts := timestampStyle.Render("[" + t + "]")
-		user := usernameStyle.Render(msg.Username)
+		user := msg.Username
 		var teamPart string
 		if msg.Team != "" {
-			teamPart = " (" + msg.Team + ")"
+			teamPart = teamStyle(msg.Team).Render(" (" + msg.Team + ")")
 		}
-		return msgStyle.Render(fmt.Sprintf("%s %s%s: %s", ts, user, teamPart, msg.Text))
+		text := msgStyle.Render(": " + msg.Text)
+		return fmt.Sprintf("%s %s%s%s", ts, user, teamPart, text)
 
 	case "sync":
 		return ""

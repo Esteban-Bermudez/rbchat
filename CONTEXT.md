@@ -15,7 +15,19 @@ Segments: `left = "rbchat | {addr} | "`, `middle = bellStyle.Render("🔔"/"🔕
 A display name chosen by the User on first launch. Persisted locally.
 
 ## Team
-An affiliation or group the User belongs to, selected from a predefined list of team names on first launch. Persisted locally. Purely cosmetic — displayed as a label next to the Username in chat messages. No filtering or scoping. Team names are hardcoded in Go source.
+An affiliation or group the User belongs to, selected from a predefined list of team names on first launch. Persisted locally. Displayed as a colored label next to the Username in chat messages. Each team has a distinct color:
+
+| Team | Color |
+|------|-------|
+| Animoto | Yellow `#FFD700` |
+| Delivra | Cyan `#00CED1` |
+| Duplex | Orange `#FFA500` |
+| Leadpages | Purple `#7C3AED` |
+| Paved | Green `#10B981` |
+| Shift | Blue `#3B82F6` |
+| Redbrick | Red `#EF4444` |
+
+Usernames are rendered in the default terminal color (no foreground override). Team names are rendered in the terminal default color with the team color applied as foreground. No filtering or scoping by team — purely cosmetic.
 
 ## Message (wire format)
 Unified JSON structure for all wire traffic. The `type` field discriminates:
