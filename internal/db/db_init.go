@@ -21,6 +21,9 @@ func Init(dataDir string) (*sql.DB, error) {
 	if _, err := database.ExecContext(context.Background(), schema); err != nil {
 		return nil, err
 	}
+	if _, err := database.ExecContext(context.Background(), "PRAGMA journal_mode=WAL"); err != nil {
+		return nil, err
+	}
 	return database, nil
 }
 

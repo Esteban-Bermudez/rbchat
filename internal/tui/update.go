@@ -138,7 +138,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Model) respondToSync() {
 	q := db.New(m.db)
-	messages, err := q.GetRecentMessagesForSync(m.ctx, 50)
+	messages, err := q.GetRecentMessagesForSync(m.ctx, 500)
 	if err != nil {
 		return
 	}
@@ -146,26 +146,32 @@ func (m *Model) respondToSync() {
 		if dbMsg.Text == "sync_request" {
 			continue
 		}
-		isJoin := dbMsg.Type == "join" || (dbMsg.Type == "sync" && dbMsg.Text == "joined the network")
-		if isJoin {
-			continue
+		msgType := dbMsg.Type
+		if dbMsg.Type == "sync" && dbMsg.Text == "joined the network" {
+			msgType = "join"
 		}
-		m.broadcaster.Send(network.Message{
-			Type:      "chat",
-			Username:  dbMsg.Username,
-			Team:      dbMsg.Team,
-			Text:      dbMsg.Text,
-			Timestamp: dbMsg.Timestamp,
-			MessageID: dbMsg.MessageID,
-			Replay:    true,
-		})
+		if msgType == "chat" || msgType == "join" {
+			m.broadcaster.Send(network.Message{
+				Type:      msgType,
+				Username:  dbMsg.Username,
+				Team:      dbMsg.Team,
+				Text:      dbMsg.Text,
+				Timestamp: dbMsg.Timestamp,
+				MessageID: dbMsg.MessageID,
+				Replay:    true,
+			})
+		}
 	}
 }
 
 func (m *Model) handleIncoming(msg network.Message) {
 	if msg.Type == "sync" {
-		m.dbInsertMessage(msg)
-		return
+		if msg.Text == "joined the network" {
+			msg.Type = "join"
+		} else {
+			m.dbInsertMessage(msg)
+			return
+		}
 	}
 
 	if msg.Type == "join" {
@@ -185,6 +191,9 @@ func (m *Model) handleIncoming(msg network.Message) {
 		m.appendMessage(msg)
 		m.dbInsertMessage(msg)
 		if !m.syncing {
+			sort.Slice(m.messages, func(i, j int) bool {
+				return m.messages[i].Timestamp < m.messages[j].Timestamp
+			})
 			m.refreshViewport()
 			if !msg.Replay {
 				m.lastSeen[msg.Username] = time.Now()
@@ -211,14 +220,16 @@ func (m *Model) appendMessage(msg network.Message) {
 
 func (m *Model) dbInsertMessage(msg network.Message) {
 	q := db.New(m.db)
-	q.InsertMessage(m.ctx, db.InsertMessageParams{
+	if err := q.InsertMessage(m.ctx, db.InsertMessageParams{
 		MessageID: msg.MessageID,
 		Type:      msg.Type,
 		Username:  msg.Username,
 		Team:      msg.Team,
 		Text:      msg.Text,
 		Timestamp: msg.Timestamp,
-	})
+	}); err != nil {
+		m.err = fmt.Errorf("db write: %v", err)
+	}
 }
 
 func (m *Model) refreshViewport() {

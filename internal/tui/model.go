@@ -80,17 +80,20 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 	seenIDs := make(map[string]struct{})
 
 	q := db.New(database)
-	last50, err := q.GetRecentMessagesToday(ctx, 50)
+	recent, err := q.GetRecentMessagesToday(ctx, 500)
 	if err == nil {
-		for i := len(last50) - 1; i >= 0; i-- {
-			dbMsg := last50[i]
+		for i := len(recent) - 1; i >= 0; i-- {
+			dbMsg := recent[i]
 			msgType := dbMsg.Type
 			if msgType == "sync" {
-				if dbMsg.Text == "sync_request" || dbMsg.Text == "joined the network" {
+				if dbMsg.Text == "sync_request" {
 					continue
 				}
-				msgType = "chat"
-			} else if msgType != "chat" {
+				if dbMsg.Text == "joined the network" {
+					msgType = "join"
+				}
+			}
+			if msgType != "chat" && msgType != "join" {
 				continue
 			}
 			msg := network.Message{
