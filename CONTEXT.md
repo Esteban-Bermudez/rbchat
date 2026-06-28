@@ -22,11 +22,17 @@ Unified JSON structure for all wire traffic. The `type` field discriminates:
 
 | type | purpose |
 |------|---------|
-| `chat` | A user-to-user chat message. Displayed in the viewport. |
-| `sync` | Sync reply. Sent on startup to request history; peers respond by broadcasting their last 50 messages. Not displayed in the viewport on the receiving end. |
-| `join` | Self-announcement after setup completes. Displayed as a system message. |
+| `chat` | A user-to-user chat message. Displayed in the viewport. This is the only type broadcast during sync replays. |
+| `sync` | Sync request. Sent on startup to request history; peers respond by broadcasting their last 50 chat messages. Never displayed in the viewport and never appended to m.messages — stored in DB only. |
+| `join` | Self-announcement after setup completes. Displayed as a system message. Not synced as history. |
 
-Fields: `type` (discriminator), `username`, `team`, `text`, `timestamp` (ISO 8601), `message_id` (UUID v4).
+Fields: `type` (discriminator), `username`, `team`, `text`, `timestamp` (ISO 8601), `message_id` (UUID v4), `replay` (bool, omitempty).
+
+## Replay flag
+A transient boolean on the wire format (`Message.Replay`). Set to `true` by `respondToSync()` for history replays. On receipt, suppresses desktop notifications and peer tracking so replaying old messages doesn't trigger alerts or inflate the online count. Never stored in the DB.
+
+## Day dividers
+The `refreshViewport()` function inserts a date divider line between messages from different days, rendered in gray (`#6B7280`). Format: `── Jan 2, 2006 ──`. The first day group has no preceding divider. Messages that render as empty (`sync` type) are skipped entirely and don't affect the date tracking.
 
 ## Timestamp
 ISO 8601 on the wire and in the DB. Displayed in the viewport as `[Mon DD HH:MM]` (e.g. `[Jun 24 14:30]`). Parsed on receipt, formatted for display in `View()`.
@@ -50,7 +56,7 @@ Local SQLite table with columns: `key` (TEXT PK), `value` (TEXT). Stores `userna
 Local SQLite table with columns: `id` (INTEGER PK), `message_id` (TEXT, UNIQUE), `username` (TEXT), `team` (TEXT), `text` (TEXT), `timestamp` (TEXT).
 
 ## Model.messages
-An in-memory `[]Message` slice. This is the source of truth for what the viewport displays. On startup, seeded from DB (last 50 messages from today). During runtime, each incoming message is appended here and also saved to DB asynchronously. Capped at 10,000 messages — trims from the front when exceeded. The DB is the full archive; the slice is a rolling window.
+An in-memory `[]Message` slice. This is the source of truth for what the viewport displays. On startup, seeded from DB (last 50 **chat** messages from today — join/sync filtered out). During runtime, all message types (chat, join) are appended as they arrive in real-time. Capped at 10,000 messages — trims from the front when exceeded. The DB is the full archive; the slice is a rolling window. Sync-type messages are never appended to m.messages (stored in DB only).
 
 ## SQL queries (sqlc)
 1. `GetConfig(key)` — select value from config
@@ -66,13 +72,13 @@ An in-memory `[]Message` slice. This is the source of truth for what the viewpor
 2. Check config for `username`. If missing → run setup (prompt for username, pick team).
 3. Start Bubble Tea with a "Syncing with the mesh..." loading view.
 4. Broadcast a `sync`-type message.
-5. Peers respond by broadcasting their last 50 messages (from today) as `sync`-type messages.
-6. Joining peer absorbs them silently — stores in DB, does not display in viewport.
-7. When sync completes (timeout or messages received) → transition to the chat view.
+5. Peers respond by broadcasting their last 50 **chat** messages (from today) — join and sync messages are excluded.
+6. Joining peer absorbs them silently — stores in DB, appends to m.messages. No notifications or peer tracking for replays.
+7. When sync completes (2s timeout) → transition to the chat view. Viewport shows day dividers between different dates.
 8. Broadcast a `join`-type message to announce presence.
 
 ## Sync
-Entirely multicast-based. A joining peer broadcasts a `sync`-type message. Existing peers respond by broadcasting their last 50 messages (also `sync` type). All peers deduplicate by `message_id`. `sync`-type messages are never displayed in the viewport.
+Entirely multicast-based. A joining peer broadcasts a `sync`-type message. Existing peers respond by broadcasting their last 50 **chat** messages (join/sync filtered out), preserving the original message_id for dedup but marking `Replay: true`. Sync-type messages on the wire are only ever the sync request itself — never appended to m.messages, stored in DB only.
 
 ## Event bridge
 The network listener goroutine calls `program.Send(IncomingMessage{...})` directly (thread-safe in Bubble Tea) to inject parsed messages into the `Update` loop. No intermediate channel.

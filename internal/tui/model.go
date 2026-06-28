@@ -83,8 +83,17 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 	if err == nil {
 		for i := len(last50) - 1; i >= 0; i-- {
 			dbMsg := last50[i]
+			msgType := dbMsg.Type
+			if msgType == "sync" {
+				if dbMsg.Text == "sync_request" || dbMsg.Text == "joined the network" {
+					continue
+				}
+				msgType = "chat"
+			} else if msgType != "chat" {
+				continue
+			}
 			msg := network.Message{
-				Type:      dbMsg.Type,
+				Type:      msgType,
 				Username:  dbMsg.Username,
 				Team:      dbMsg.Team,
 				Text:      dbMsg.Text,

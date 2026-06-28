@@ -137,52 +137,56 @@ func (m *Model) respondToSync() {
 		return
 	}
 	for _, dbMsg := range messages {
-		if dbMsg.Type == "sync" {
+		if dbMsg.Text == "sync_request" {
+			continue
+		}
+		isJoin := dbMsg.Type == "join" || (dbMsg.Type == "sync" && dbMsg.Text == "joined the network")
+		if isJoin {
 			continue
 		}
 		m.broadcaster.Send(network.Message{
-			Type:      "sync",
+			Type:      "chat",
 			Username:  dbMsg.Username,
 			Team:      dbMsg.Team,
 			Text:      dbMsg.Text,
 			Timestamp: dbMsg.Timestamp,
 			MessageID: dbMsg.MessageID,
+			Replay:    true,
 		})
 	}
 }
 
 func (m *Model) handleIncoming(msg network.Message) {
 	if msg.Type == "sync" {
-		m.appendMessage(msg)
 		m.dbInsertMessage(msg)
-		if !m.syncing {
-			m.refreshViewport()
-		}
 		return
 	}
 
 	if msg.Type == "join" {
-		if m.syncing {
-			return
-		}
-		m.lastSeen[msg.Username] = time.Now()
-		m.peerCount = m.countActivePeers()
-		m.appendMessage(msg)
-		m.dbInsertMessage(msg)
-		m.refreshViewport()
-		return
-	}
-
-	if msg.Type == "chat" {
-		m.lastSeen[msg.Username] = time.Now()
-		m.peerCount = m.countActivePeers()
 		m.appendMessage(msg)
 		m.dbInsertMessage(msg)
 		if !m.syncing {
 			m.refreshViewport()
+			if !msg.Replay {
+				m.lastSeen[msg.Username] = time.Now()
+				m.peerCount = m.countActivePeers()
+			}
 		}
-		if m.notificationsEnabled && msg.Username != m.username {
-			notify(msg.Username, msg.Team, msg.Text)
+		return
+	}
+
+	if msg.Type == "chat" {
+		m.appendMessage(msg)
+		m.dbInsertMessage(msg)
+		if !m.syncing {
+			m.refreshViewport()
+			if !msg.Replay {
+				m.lastSeen[msg.Username] = time.Now()
+				m.peerCount = m.countActivePeers()
+				if m.notificationsEnabled && msg.Username != m.username {
+					notify(msg.Username, msg.Team, msg.Text)
+				}
+			}
 		}
 		return
 	}
@@ -213,8 +217,20 @@ func (m *Model) dbInsertMessage(msg network.Message) {
 
 func (m *Model) refreshViewport() {
 	var content string
+	var lastDate string
 	for _, msg := range m.messages {
-		content += renderMessage(msg) + "\n"
+		rendered := renderMessage(msg)
+		if rendered == "" {
+			continue
+		}
+		date := messageDate(msg.Timestamp)
+		if date != "" && date != lastDate && lastDate != "" {
+			content += dividerStyle.Render(fmt.Sprintf("── %s ──", date)) + "\n"
+		}
+		if date != "" {
+			lastDate = date
+		}
+		content += rendered + "\n"
 	}
 	m.viewport.SetContent(content)
 	m.viewport.GotoBottom()

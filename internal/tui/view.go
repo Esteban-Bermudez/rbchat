@@ -49,6 +49,9 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color("#EF4444")).
 			Background(lipgloss.Color("#7C3AED"))
+
+	dividerStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#6B7280"))
 )
 
 func (m Model) View() string {
@@ -127,4 +130,12 @@ func parseTimestamp(ts string) string {
 		return ts
 	}
 	return parsed.Format("Jan 2 15:04")
+}
+
+func messageDate(ts string) string {
+	parsed, err := time.Parse(time.RFC3339, ts)
+	if err != nil {
+		return ""
+	}
+	return parsed.Format("Jan 2, 2006")
 }
