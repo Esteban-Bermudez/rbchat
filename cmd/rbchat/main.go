@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"syscall"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/esteban/rbchat/internal/db"
@@ -46,6 +48,16 @@ func main() {
 		fmt.Fprintf(lf, "%d", os.Getpid())
 		lf.Close()
 		defer os.Remove(lockPath)
+	} else if isStaleLock(lockPath) {
+		os.Remove(lockPath)
+		lf, err = os.OpenFile(lockPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
+		if err == nil {
+			fmt.Fprintf(lf, "%d", os.Getpid())
+			lf.Close()
+			defer os.Remove(lockPath)
+		} else {
+			otherInstanceRunning = true
+		}
 	} else {
 		otherInstanceRunning = true
 	}
@@ -83,4 +95,27 @@ func main() {
 	cancel()
 	listener.Close()
 	broadcaster.Close()
+}
+
+func isStaleLock(lockPath string) bool {
+	data, err := os.ReadFile(lockPath)
+	if err != nil {
+		return true
+	}
+	var pid int
+	if _, err := fmt.Sscanf(string(data), "%d", &pid); err != nil || pid <= 0 {
+		return true
+	}
+	return !isProcessAlive(pid)
+}
+
+func isProcessAlive(pid int) bool {
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	}
+	if runtime.GOOS == "windows" {
+		return true
+	}
+	return proc.Signal(syscall.Signal(0)) == nil
 }
