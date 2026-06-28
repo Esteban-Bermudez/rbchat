@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/charmbracelet/bubbles/viewport"
@@ -110,6 +111,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case SyncTimeoutMsg:
 		m.syncing = false
+		sort.Slice(m.messages, func(i, j int) bool {
+			return m.messages[i].Timestamp < m.messages[j].Timestamp
+		})
 		m.refreshViewport()
 
 		m.broadcaster.Send(network.Message{

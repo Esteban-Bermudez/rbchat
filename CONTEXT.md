@@ -74,7 +74,7 @@ An in-memory `[]Message` slice. This is the source of truth for what the viewpor
 4. Broadcast a `sync`-type message.
 5. Peers respond by broadcasting their last 50 **chat** messages (from today) — join and sync messages are excluded.
 6. Joining peer absorbs them silently — stores in DB, appends to m.messages. No notifications or peer tracking for replays.
-7. When sync completes (2s timeout) → transition to the chat view. Viewport shows day dividers between different dates.
+7. When sync completes (2s timeout): sort m.messages chronologically by ISO 8601 timestamp string, then transition to the chat view. Viewport shows day dividers between different dates.
 8. Broadcast a `join`-type message to announce presence.
 
 ## Sync
