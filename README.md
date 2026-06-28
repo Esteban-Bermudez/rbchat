@@ -32,16 +32,43 @@ rbchat
 
 On first launch you'll be prompted for a username and team. After that, you're in the chat — any other `rbchat` instance on the LAN will automatically discover you.
 
-- Type a message and press Enter to send
-- Ctrl+C to quit
-- Ctrl+N to toggle desktop notifications on/off
-- `--no-notify` to disable notifications at startup
-- Messages are persisted locally in `~/.local/share/rbchat/rbchat.db`
-- Joining peers automatically sync the last 50 messages from today
+### Keybinds
+
+| Key | Action |
+|-----|--------|
+| Enter | Send message |
+| Ctrl+C | Quit |
+| Ctrl+N | Toggle desktop notifications on/off |
+
+Pass `--no-notify` at startup to disable notifications entirely.
+
+### Notifications on macOS
+
+rbchat uses macOS's native notification system via `osascript`. On first run your terminal app (Terminal / iTerm2) may need notification permission:
+
+1. Open **System Settings → Notifications**
+2. Find your terminal app in the list
+3. Toggle **Allow Notifications** on
+
+If you miss the prompt, the setting is under **System Settings → Privacy & Security → Notifications**.
 
 ### Teams
 
-Available teams: Animoto, Delivra, Duplex, Leadpages, Paved, Shift, Redbrick. Team is purely cosmetic — displayed next to your username in chat messages.
+Available teams: Animoto, Delivra, Duplex, Leadpages, Paved, Shift, Redbrick. Each team has a color-coded label in chat messages.
+
+| Team | Color |
+|------|-------|
+| Animoto | Yellow |
+| Delivra | Cyan |
+| Duplex | Orange |
+| Leadpages | Purple |
+| Paved | Green |
+| Shift | Blue |
+| Redbrick | Red |
+
+### Data
+
+Messages are persisted locally in `~/.local/share/rbchat/rbchat.db`. Joining peers automatically sync the last 50 chat messages from today.
 
 ## Development
 
