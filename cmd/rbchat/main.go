@@ -43,24 +43,31 @@ func main() {
 
 	lockPath := filepath.Join(dd, "rbchat.lock")
 	otherInstanceRunning := false
-	lf, err := os.OpenFile(lockPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
-	if err == nil {
-		fmt.Fprintf(lf, "%d", os.Getpid())
-		lf.Close()
-		defer os.Remove(lockPath)
-	} else if isStaleLock(lockPath) {
-		os.Remove(lockPath)
-		lf, err = os.OpenFile(lockPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
-		if err == nil {
-			fmt.Fprintf(lf, "%d", os.Getpid())
-			lf.Close()
-			defer os.Remove(lockPath)
-		} else {
-			otherInstanceRunning = true
+
+	os.MkdirAll(lockPath, 0755)
+	pidFile := filepath.Join(lockPath, fmt.Sprintf("%d.pid", os.Getpid()))
+
+	entries, _ := os.ReadDir(lockPath)
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
 		}
-	} else {
+		data, err := os.ReadFile(filepath.Join(lockPath, e.Name()))
+		if err != nil {
+			os.Remove(filepath.Join(lockPath, e.Name()))
+			continue
+		}
+		var pid int
+		fmt.Sscanf(string(data), "%d", &pid)
+		if pid <= 0 || !isProcessAlive(pid) {
+			os.Remove(filepath.Join(lockPath, e.Name()))
+			continue
+		}
 		otherInstanceRunning = true
 	}
+
+	os.WriteFile(pidFile, []byte(fmt.Sprintf("%d", os.Getpid())), 0644)
+	defer os.Remove(pidFile)
 
 	username, team, err := tui.RunSetup(database)
 	if err != nil {
@@ -95,18 +102,6 @@ func main() {
 	cancel()
 	listener.Close()
 	broadcaster.Close()
-}
-
-func isStaleLock(lockPath string) bool {
-	data, err := os.ReadFile(lockPath)
-	if err != nil {
-		return true
-	}
-	var pid int
-	if _, err := fmt.Sscanf(string(data), "%d", &pid); err != nil || pid <= 0 {
-		return true
-	}
-	return !isProcessAlive(pid)
 }
 
 func isProcessAlive(pid int) bool {
