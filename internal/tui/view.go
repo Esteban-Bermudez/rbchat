@@ -74,9 +74,19 @@ func (m Model) View() string {
 	}
 
 	if m.syncing {
-		return syncStyle.Render(" Syncing with the mesh... ") + "\n\n" +
+		str := syncStyle.Render(" Syncing with the mesh... ") +
+			"\n\n" +
 			"Waiting for peers to respond...\n" +
 			"(continuing in a moment)\n"
+
+		// Place in the center of the viewport
+		return lipgloss.Place(
+			m.viewport.Width,
+			m.viewport.Height,
+			lipgloss.Center,
+			lipgloss.Center,
+			str,
+		)
 	}
 
 	if !m.ready {
