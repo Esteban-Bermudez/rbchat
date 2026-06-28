@@ -10,7 +10,6 @@ import (
 	"github.com/esteban/rbchat/internal/db"
 	"github.com/esteban/rbchat/internal/network"
 	"github.com/google/uuid"
-	"github.com/muesli/reflow/wordwrap"
 )
 
 const (
@@ -226,7 +225,7 @@ func (m *Model) refreshViewport() {
 	var content string
 	var lastDate string
 	for _, msg := range m.messages {
-		rendered := renderMessage(msg)
+		rendered := renderMessage(msg, m.viewport.Width)
 		if rendered == "" {
 			continue
 		}
@@ -237,7 +236,7 @@ func (m *Model) refreshViewport() {
 		if date != "" {
 			lastDate = date
 		}
-		content += wordwrap.String(rendered, m.viewport.Width) + "\n"
+		content += rendered + "\n"
 	}
 	m.viewport.SetContent(content)
 	m.viewport.GotoBottom()

@@ -120,10 +120,10 @@ func (m Model) View() string {
 }
 
 func RenderMessage(msg network.Message) string {
-	return renderMessage(msg)
+	return renderMessage(msg, 0)
 }
 
-func renderMessage(msg network.Message) string {
+func renderMessage(msg network.Message, width int) string {
 	switch msg.Type {
 	case "join":
 		t := parseTimestamp(msg.Timestamp)
@@ -144,8 +144,17 @@ func renderMessage(msg network.Message) string {
 		if msg.Team != "" {
 			teamPart = teamStyle(msg.Team).Render(" (" + msg.Team + ")")
 		}
-		text := msgStyle.Render(": " + msg.Text)
-		return fmt.Sprintf("%s %s%s%s", ts, user, teamPart, text)
+		prefix := fmt.Sprintf("%s %s%s:", ts, user, teamPart)
+		text := msg.Text
+		if width > 0 {
+			prefixWidth := lipgloss.Width(prefix)
+			textWidth := width - prefixWidth - 2
+			if textWidth < 10 {
+				textWidth = 10
+			}
+			text = wrapText(text, textWidth)
+		}
+		return fmt.Sprintf("%s %s%s%s", ts, user, teamPart, msgStyle.Render(" "+text))
 
 	case "sync":
 		return ""
@@ -169,4 +178,28 @@ func messageDate(ts string) string {
 		return ""
 	}
 	return parsed.Format("Jan 2, 2006")
+}
+
+func wrapText(text string, width int) string {
+	if width <= 0 {
+		return text
+	}
+	var result strings.Builder
+	for i, line := range strings.Split(text, "\n") {
+		if i > 0 {
+			result.WriteByte('\n')
+		}
+		remaining := line
+		for len(remaining) > width {
+			idx := strings.LastIndex(remaining[:width+1], " ")
+			if idx <= 0 {
+				idx = width
+			}
+			result.WriteString(remaining[:idx])
+			result.WriteByte('\n')
+			remaining = strings.TrimLeft(remaining[idx:], " ")
+		}
+		result.WriteString(remaining)
+	}
+	return result.String()
 }
