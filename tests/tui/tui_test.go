@@ -66,6 +66,69 @@ func TestRenderMessageJoin(t *testing.T) {
 	}
 }
 
+func TestNewModelOnlyRendersMessagesMatchingNetworkID(t *testing.T) {
+	network.SetSecret("test-secret")
+	t.Cleanup(func() { network.SetSecret("") })
+
+	database := setupDB(t)
+	defer database.Close()
+	q := db.New(database)
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	office := network.Message{
+		Type:      "chat",
+		Username:  "user",
+		Team:      "Redbrick",
+		Text:      "office message",
+		Timestamp: now.Format(time.RFC3339),
+		MessageID: "office-msg",
+		NetworkID: "office-net",
+	}
+	office.Sign()
+
+	home := network.Message{
+		Type:      "chat",
+		Username:  "user",
+		Team:      "Redbrick",
+		Text:      "home message",
+		Timestamp: now.Add(time.Minute).Format(time.RFC3339),
+		MessageID: "home-msg",
+		NetworkID: "home-net",
+	}
+	home.Sign()
+
+	untagged := network.Message{
+		Type:      "chat",
+		Username:  "user",
+		Team:      "Redbrick",
+		Text:      "untagged message",
+		Timestamp: now.Add(2 * time.Minute).Format(time.RFC3339),
+		MessageID: "untagged-msg",
+		NetworkID: "",
+	}
+	untagged.Sign()
+
+	insertMessage(t, q, ctx, office)
+	insertMessage(t, q, ctx, home)
+	insertMessage(t, q, ctx, untagged)
+
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "office-net")
+	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
+	view := updated.View()
+
+	if !strings.Contains(view, "office message") {
+		t.Fatalf("expected office message to render, view: %q", view)
+	}
+	if strings.Contains(view, "home message") {
+		t.Fatalf("expected home message to be hidden, view: %q", view)
+	}
+	if strings.Contains(view, "untagged message") {
+		t.Fatalf("expected untagged message (empty network_id) to be hidden when scoped to office-net, view: %q", view)
+	}
+}
+
 func TestNewModelOnlyRendersMessagesSignedWithCurrentSecret(t *testing.T) {
 	network.SetSecret("current-secret")
 	t.Cleanup(func() { network.SetSecret("") })
@@ -109,7 +172,7 @@ func TestNewModelOnlyRendersMessagesSignedWithCurrentSecret(t *testing.T) {
 		MessageID: "unsigned-message",
 	})
 
-	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true)
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "")
 	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
 	view := updated.View()
@@ -144,7 +207,8 @@ func setupDB(t *testing.T) *sql.DB {
 			team       TEXT NOT NULL DEFAULT '',
 			text       TEXT NOT NULL,
 			timestamp  TEXT NOT NULL,
-			signature  TEXT NOT NULL DEFAULT ''
+			signature  TEXT NOT NULL DEFAULT '',
+			network_id TEXT NOT NULL DEFAULT ''
 		);
 	`)
 	if err != nil {
@@ -163,6 +227,7 @@ func insertMessage(t *testing.T, q *db.Queries, ctx context.Context, msg network
 		Text:      msg.Text,
 		Timestamp: msg.Timestamp,
 		Signature: msg.Signature,
+		NetworkID: msg.NetworkID,
 	}); err != nil {
 		t.Fatal(err)
 	}

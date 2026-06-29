@@ -70,9 +70,10 @@ type Model struct {
 	notificationsEnabled bool
 	otherInstanceRunning bool
 	showHelp             bool
+	networkID            string
 }
 
-func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool) Model {
+func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID string) Model {
 	ti := textinput.New()
 	ti.Placeholder = "Type a message..."
 	ti.Focus()
@@ -81,7 +82,10 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 	seenIDs := make(map[string]struct{})
 
 	q := db.New(database)
-	recent, err := q.GetRecentMessagesToday(ctx, 500)
+	recent, err := q.GetRecentMessagesToday(ctx, db.GetRecentMessagesTodayParams{
+		NetworkID: networkID,
+		Limit:     500,
+	})
 	if err == nil {
 		for i := len(recent) - 1; i >= 0; i-- {
 			dbMsg := recent[i]
@@ -133,5 +137,6 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 		lastSeen:             make(map[string]time.Time),
 		notificationsEnabled: notificationsEnabled,
 		otherInstanceRunning: otherInstanceRunning,
+		networkID:            networkID,
 	}
 }

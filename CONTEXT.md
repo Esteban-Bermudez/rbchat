@@ -110,3 +110,10 @@ Ctrl+C in the Bubble Tea view → display "Shutting down..." → cancel the list
 
 ## Peer tracking
 "Peers online" count is the number of unique message senders seen within the last 60 seconds. Only `chat` and `join` messages update the timer — `sync` messages (history replays) are excluded to prevent stale peers from appearing online.
+
+## Network scoping (network_id)
+Messages are scoped to the physical LAN to prevent cross-contamination between different networks (e.g. office vs home). Each message is tagged with a `network_id` derived from the **default gateway's MAC address**, which is unique per physical router.
+
+Detection: `ComputeNetworkID()` finds the gateway IP via `route -n get default` (macOS), `/proc/net/route` (Linux), or `route print` (Windows), then resolves its MAC via `arp -n <gw>` (macOS/Linux) or `arp -a <gw>` (Windows). The MAC is hashed with SHA-256 (first 8 bytes → 16-char hex). If detection fails (no network, unsupported OS), `network_id` is left empty and messages are untagged.
+
+The `Message.NetworkID` field is set on all outgoing messages (chat, join, sync). On receipt, messages with a mismatched non-empty `network_id` are silently dropped. When loading messages from the local DB, only messages matching the current `network_id` are loaded (or all if `network_id` is empty). The `messages` table has a `network_id TEXT NOT NULL DEFAULT ''` column; existing messages default to empty (backwards compatible).

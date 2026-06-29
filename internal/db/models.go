@@ -18,4 +18,5 @@ type Message struct {
 	Text      string
 	Timestamp string
 	Signature string
+	NetworkID string
 }

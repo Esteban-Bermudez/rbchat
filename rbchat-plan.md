@@ -159,5 +159,20 @@ All messages are signed with HMAC-SHA256 using a shared secret (`RBCHAT_SECRET`)
 
 The secret is injected at build time via `-ldflags -X main.rbchatSecret=...` (from `RBCHAT_SECRET` env var in GoReleaser/CI). With no build-time secret configured, signing and verification are disabled for local development.
 
+## Network scoping (LAN isolation)
+
+Messages from different physical networks are isolated using a `network_id` derived from the **default gateway's MAC address**. The gateway MAC is unique per router, so all machines on the same LAN compute the same `network_id`, and machines on different LANs compute different IDs.
+
+Detection is handled by `internal/network/network_id.go` — `ComputeNetworkID()`:
+1. Find the default gateway IP via `route -n get default` (macOS) or `/proc/net/route` (Linux)
+2. Resolve the gateway's MAC via `arp -n <gw>`
+3. Hash the MAC with SHA-256, take first 8 bytes → 16-char hex
+
+The `network_id` is stored in:
+- `messages` table (`network_id TEXT NOT NULL DEFAULT ''`)
+- `Message` struct (`NetworkID string`, JSON `"network_id,omitempty"`)
+
+All query scoping is done in `sql/query.sql`. The `InsertMessage` query stores `network_id` alongside each message. `GetRecentMessagesToday` and `GetRecentMessagesForSync` filter by `network_id`. On receipt, messages with a non-empty, mismatched `network_id` are silently dropped in `handleIncoming()`.
+
 ```
 ```

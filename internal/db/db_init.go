@@ -22,6 +22,7 @@ func Init(dataDir string) (*sql.DB, error) {
 		return nil, err
 	}
 	database.ExecContext(context.Background(), "ALTER TABLE messages ADD COLUMN signature TEXT NOT NULL DEFAULT ''")
+	database.ExecContext(context.Background(), "ALTER TABLE messages ADD COLUMN network_id TEXT NOT NULL DEFAULT ''")
 	if _, err := database.ExecContext(context.Background(), "PRAGMA journal_mode=WAL"); err != nil {
 		return nil, err
 	}
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS messages (
     team       TEXT NOT NULL DEFAULT '',
     text       TEXT NOT NULL,
     timestamp  TEXT NOT NULL,
-    signature  TEXT NOT NULL DEFAULT ''
+    signature  TEXT NOT NULL DEFAULT '',
+    network_id TEXT NOT NULL DEFAULT ''
 );
 `

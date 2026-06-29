@@ -28,6 +28,7 @@ func (m Model) Init() tea.Cmd {
 		Text:      "sync_request",
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		MessageID: uuid.New().String(),
+		NetworkID: m.networkID,
 	})
 
 	return tea.Batch(
@@ -109,6 +110,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				Text:      text,
 				Timestamp: time.Now().UTC().Format(time.RFC3339),
 				MessageID: uuid.New().String(),
+				NetworkID: m.networkID,
 			}
 			chatMsg.Sign()
 
@@ -155,6 +157,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				Text:      "joined the network",
 				Timestamp: time.Now().UTC().Format(time.RFC3339),
 				MessageID: uuid.New().String(),
+				NetworkID: m.networkID,
 			})
 		}
 		return m, WaitForNetworkMsg(m.msgCh)
@@ -169,7 +172,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Model) respondToSync() {
 	q := db.New(m.db)
-	messages, err := q.GetRecentMessagesForSync(m.ctx, 500)
+	messages, err := q.GetRecentMessagesForSync(m.ctx, db.GetRecentMessagesForSyncParams{
+		NetworkID: m.networkID,
+		Limit:     500,
+	})
 	if err != nil {
 		return
 	}
@@ -204,6 +210,10 @@ func (m *Model) respondToSync() {
 }
 
 func (m *Model) handleIncoming(msg network.Message) {
+	if m.networkID != "" && msg.NetworkID != "" && msg.NetworkID != m.networkID {
+		return
+	}
+
 	if msg.Type == "sync" {
 		if msg.Text == "joined the network" {
 			msg.Type = "join"
@@ -273,6 +283,7 @@ func (m *Model) dbInsertMessage(msg network.Message) {
 		Text:      msg.Text,
 		Timestamp: msg.Timestamp,
 		Signature: msg.Signature,
+		NetworkID: m.networkID,
 	}); err != nil {
 		m.err = fmt.Errorf("db write: %v", err)
 	}

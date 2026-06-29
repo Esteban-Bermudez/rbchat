@@ -23,6 +23,7 @@ type Message struct {
 	Text      string `json:"text"`
 	Timestamp string `json:"timestamp"`
 	MessageID string `json:"message_id"`
+	NetworkID string `json:"network_id,omitempty"`
 	Replay    bool   `json:"replay,omitempty"`
 	Signature string `json:"signature,omitempty"`
 }

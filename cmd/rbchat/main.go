@@ -94,7 +94,9 @@ func main() {
 	msgCh := make(chan network.IncomingMessage, 100)
 	ctx, cancel := context.WithCancel(context.Background())
 
-	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel, notificationsEnabled, otherInstanceRunning)
+	networkID := network.ComputeNetworkID()
+
+	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel, notificationsEnabled, otherInstanceRunning, networkID)
 
 	go listener.Listen(ctx, msgCh)
 

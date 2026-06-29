@@ -21,15 +21,21 @@ func (q *Queries) GetConfig(ctx context.Context, key string) (string, error) {
 }
 
 const getRecentMessagesForSync = `-- name: GetRecentMessagesForSync :many
-SELECT id, message_id, type, username, team, text, timestamp, signature
+SELECT id, message_id, type, username, team, text, timestamp, signature, network_id
 FROM messages
 WHERE signature != ''
+  AND network_id = ?
 ORDER BY id DESC
 LIMIT ?
 `
 
-func (q *Queries) GetRecentMessagesForSync(ctx context.Context, limit int64) ([]Message, error) {
-	rows, err := q.db.QueryContext(ctx, getRecentMessagesForSync, limit)
+type GetRecentMessagesForSyncParams struct {
+	NetworkID string
+	Limit     int64
+}
+
+func (q *Queries) GetRecentMessagesForSync(ctx context.Context, arg GetRecentMessagesForSyncParams) ([]Message, error) {
+	rows, err := q.db.QueryContext(ctx, getRecentMessagesForSync, arg.NetworkID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +52,7 @@ func (q *Queries) GetRecentMessagesForSync(ctx context.Context, limit int64) ([]
 			&i.Text,
 			&i.Timestamp,
 			&i.Signature,
+			&i.NetworkID,
 		); err != nil {
 			return nil, err
 		}
@@ -61,16 +68,22 @@ func (q *Queries) GetRecentMessagesForSync(ctx context.Context, limit int64) ([]
 }
 
 const getRecentMessagesToday = `-- name: GetRecentMessagesToday :many
-SELECT id, message_id, type, username, team, text, timestamp, signature
+SELECT id, message_id, type, username, team, text, timestamp, signature, network_id
 FROM messages
 WHERE date(timestamp) = date('now')
   AND signature != ''
+  AND network_id = ?
 ORDER BY id DESC
 LIMIT ?
 `
 
-func (q *Queries) GetRecentMessagesToday(ctx context.Context, limit int64) ([]Message, error) {
-	rows, err := q.db.QueryContext(ctx, getRecentMessagesToday, limit)
+type GetRecentMessagesTodayParams struct {
+	NetworkID string
+	Limit     int64
+}
+
+func (q *Queries) GetRecentMessagesToday(ctx context.Context, arg GetRecentMessagesTodayParams) ([]Message, error) {
+	rows, err := q.db.QueryContext(ctx, getRecentMessagesToday, arg.NetworkID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +100,7 @@ func (q *Queries) GetRecentMessagesToday(ctx context.Context, limit int64) ([]Me
 			&i.Text,
 			&i.Timestamp,
 			&i.Signature,
+			&i.NetworkID,
 		); err != nil {
 			return nil, err
 		}
@@ -102,8 +116,8 @@ func (q *Queries) GetRecentMessagesToday(ctx context.Context, limit int64) ([]Me
 }
 
 const insertMessage = `-- name: InsertMessage :exec
-INSERT INTO messages (message_id, type, username, team, text, timestamp, signature)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT INTO messages (message_id, type, username, team, text, timestamp, signature, network_id)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(message_id) DO NOTHING
 `
 
@@ -115,6 +129,7 @@ type InsertMessageParams struct {
 	Text      string
 	Timestamp string
 	Signature string
+	NetworkID string
 }
 
 func (q *Queries) InsertMessage(ctx context.Context, arg InsertMessageParams) error {
@@ -126,6 +141,7 @@ func (q *Queries) InsertMessage(ctx context.Context, arg InsertMessageParams) er
 		arg.Text,
 		arg.Timestamp,
 		arg.Signature,
+		arg.NetworkID,
 	)
 	return err
 }

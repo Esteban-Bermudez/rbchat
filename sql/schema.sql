@@ -11,5 +11,6 @@ CREATE TABLE IF NOT EXISTS messages (
     team       TEXT NOT NULL DEFAULT '',
     text       TEXT NOT NULL,
     timestamp  TEXT NOT NULL,
-    signature  TEXT NOT NULL DEFAULT ''
+    signature  TEXT NOT NULL DEFAULT '',
+    network_id TEXT NOT NULL DEFAULT ''
 );
