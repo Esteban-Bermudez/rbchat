@@ -16,7 +16,20 @@ import (
 
 const multicastAddr = "224.0.0.1:9999"
 
-var rbchatSecret string
+var (
+	rbchatSecret string
+	version      = "dev"
+	commit       = "none"
+	date         = "unknown"
+)
+
+func printVersion() {
+	if version == "dev" {
+		fmt.Println("rbchat dev")
+		return
+	}
+	fmt.Printf("rbchat v%s (commit %s, built %s)\n", version, commit, date)
+}
 
 func dataDir() string {
 	dataHome := os.Getenv("XDG_DATA_HOME")
@@ -28,6 +41,18 @@ func dataDir() string {
 }
 
 func main() {
+	for _, arg := range os.Args[1:] {
+		if arg == "--version" || arg == "-v" {
+			printVersion()
+			return
+		}
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "update" {
+		cmdUpdate()
+		return
+	}
+
 	notificationsEnabled := true
 	for _, arg := range os.Args[1:] {
 		if arg == "--no-notify" {

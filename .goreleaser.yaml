@@ -8,6 +8,9 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - -X main.rbchatSecret={{ .Env.RBCHAT_SECRET }}
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .Commit }}
+      - -X main.date={{ .Date }}
     goos:
       - darwin
       - linux
