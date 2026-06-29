@@ -89,6 +89,7 @@ func TestInsertAndGetRecentMessages(t *testing.T) {
 			Team:      "team",
 			Text:      "hello " + itoa(i),
 			Timestamp: today + "T1" + itoa(i) + ":00:00Z",
+			Signature: "testsig",
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -121,6 +122,7 @@ func TestInsertDuplicateMessage(t *testing.T) {
 		Team:      "team",
 		Text:      "first",
 		Timestamp: today + "T10:00:00Z",
+		Signature: "testsig",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -133,6 +135,7 @@ func TestInsertDuplicateMessage(t *testing.T) {
 		Team:      "team",
 		Text:      "duplicate",
 		Timestamp: today + "T10:00:00Z",
+		Signature: "testsig",
 	})
 	if err != nil {
 		t.Fatal(err)

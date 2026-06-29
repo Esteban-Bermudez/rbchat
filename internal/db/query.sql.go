@@ -23,6 +23,7 @@ func (q *Queries) GetConfig(ctx context.Context, key string) (string, error) {
 const getRecentMessagesForSync = `-- name: GetRecentMessagesForSync :many
 SELECT id, message_id, type, username, team, text, timestamp, signature
 FROM messages
+WHERE signature != ''
 ORDER BY id DESC
 LIMIT ?
 `
@@ -63,6 +64,7 @@ const getRecentMessagesToday = `-- name: GetRecentMessagesToday :many
 SELECT id, message_id, type, username, team, text, timestamp, signature
 FROM messages
 WHERE date(timestamp) = date('now')
+  AND signature != ''
 ORDER BY id DESC
 LIMIT ?
 `

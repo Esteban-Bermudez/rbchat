@@ -13,11 +13,13 @@ ON CONFLICT(message_id) DO NOTHING;
 SELECT id, message_id, type, username, team, text, timestamp, signature
 FROM messages
 WHERE date(timestamp) = date('now')
+  AND signature != ''
 ORDER BY id DESC
 LIMIT ?;
 
 -- name: GetRecentMessagesForSync :many
 SELECT id, message_id, type, username, team, text, timestamp, signature
 FROM messages
+WHERE signature != ''
 ORDER BY id DESC
 LIMIT ?;
