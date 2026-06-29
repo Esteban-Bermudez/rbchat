@@ -68,7 +68,7 @@ Available teams: Animoto, Delivra, Duplex, Leadpages, Paved, Shift, Redbrick. Ea
 
 ### Data
 
-Messages are persisted locally in `~/.local/share/rbchat/rbchat.db`. Joining peers automatically sync the last 50 chat messages from today.
+Messages are persisted locally in `~/.local/share/rbchat/rbchat.db` (respects `$XDG_DATA_HOME`). Joining peers automatically sync recent chat messages.
 
 ## Development
 
@@ -80,11 +80,16 @@ Messages are persisted locally in `~/.local/share/rbchat/rbchat.db`. Joining pee
 ### Commands
 
 ```sh
-CGO_ENABLED=0 go run ./cmd/rbchat    # run the app
-CGO_ENABLED=0 go test ./tests/...    # run all tests
-sqlc generate                         # regenerate internal/db/ from sql/
-gofmt -w .                            # format all Go source
+CGO_ENABLED=0 go run ./cmd/rbchat      # run the app
+CGO_ENABLED=0 go test ./tests/...      # run all tests
+sqlc generate                           # regenerate internal/db/ from sql/
+gofmt -w .                              # format all Go source
 ```
+
+> **Isolated testing**: Set `XDG_DATA_HOME` to run with a separate database:
+> ```sh
+> XDG_DATA_HOME=/tmp/rbchat-test go run ./cmd/rbchat
+> ```
 
 ### Project structure
 

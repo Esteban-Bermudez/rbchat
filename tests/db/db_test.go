@@ -28,7 +28,8 @@ func setupDB(t *testing.T) *sql.DB {
 			username   TEXT NOT NULL,
 			team       TEXT NOT NULL DEFAULT '',
 			text       TEXT NOT NULL,
-			timestamp  TEXT NOT NULL
+			timestamp  TEXT NOT NULL,
+			signature  TEXT NOT NULL DEFAULT ''
 		);
 	`)
 	if err != nil {

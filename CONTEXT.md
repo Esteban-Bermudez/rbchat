@@ -45,7 +45,7 @@ Every outgoing message is signed with HMAC-SHA256 using a shared secret (`RBCHAT
 
 On receipt, the listener recomputes the HMAC and verifies it against the stored signature. Messages with invalid or missing signatures are silently dropped when a secret is configured.
 
-The secret is injected at build time via `-ldflags -X main.rbchatSecret=...` (sourced from `RBCHAT_SECRET` env var in GoReleaser/CI). For local development it falls back to the `RBCHAT_SECRET` environment variable at runtime. When no secret is set, signing and verification are disabled entirely — all messages pass through unchanged.
+The secret is injected at build time via `-ldflags -X main.rbchatSecret=...` (sourced from `RBCHAT_SECRET` env var in GoReleaser/CI). When no secret is set, signing and verification are disabled entirely — all messages pass through unchanged.
 
 ## Replay flag
 A transient boolean on the wire format (`Message.Replay`). Set to `true` by `respondToSync()` for history replays. On receipt, suppresses desktop notifications and peer tracking so replaying old messages doesn't trigger alerts or inflate the online count. Never stored in the DB.
