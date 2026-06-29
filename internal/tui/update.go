@@ -110,6 +110,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				Timestamp: time.Now().UTC().Format(time.RFC3339),
 				MessageID: uuid.New().String(),
 			}
+			chatMsg.Sign()
 
 			if err := m.broadcaster.Send(chatMsg); err != nil {
 				return m, func() tea.Msg {
@@ -176,6 +177,9 @@ func (m *Model) respondToSync() {
 		if dbMsg.Text == "sync_request" {
 			continue
 		}
+		if dbMsg.Signature == "" {
+			continue
+		}
 		msgType := dbMsg.Type
 		if dbMsg.Type == "sync" && dbMsg.Text == "joined the network" {
 			msgType = "join"
@@ -239,6 +243,9 @@ func (m *Model) handleIncoming(msg network.Message) {
 }
 
 func (m *Model) appendMessage(msg network.Message) {
+	if msg.Signature == "" {
+		return
+	}
 	if _, seen := m.seenIDs[msg.MessageID]; seen {
 		return
 	}

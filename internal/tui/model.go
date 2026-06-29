@@ -85,6 +85,9 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 	if err == nil {
 		for i := len(recent) - 1; i >= 0; i-- {
 			dbMsg := recent[i]
+			if dbMsg.Signature == "" {
+				continue
+			}
 			msgType := dbMsg.Type
 			if msgType == "sync" {
 				if dbMsg.Text == "sync_request" {
@@ -123,7 +126,7 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 		messages:             messages,
 		seenIDs:              seenIDs,
 		input:                ti,
-		syncing:              true,
+		syncing: true,
 		lastSeen:             make(map[string]time.Time),
 		notificationsEnabled: notificationsEnabled,
 		otherInstanceRunning: otherInstanceRunning,

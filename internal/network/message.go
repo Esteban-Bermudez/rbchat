@@ -14,6 +14,10 @@ func SetSecret(s string) {
 	}
 }
 
+func SigningEnabled() bool {
+	return len(secret) > 0
+}
+
 type Message struct {
 	Type      string `json:"type"`
 	Username  string `json:"username"`
