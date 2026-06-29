@@ -3,6 +3,7 @@ package network
 import (
 	"encoding/json"
 	"net"
+	"strings"
 )
 
 type Broadcaster struct {
@@ -22,6 +23,10 @@ func NewBroadcaster(addr string) (*Broadcaster, error) {
 }
 
 func (b *Broadcaster) Send(msg Message) error {
+	if strings.TrimSpace(msg.Text) == "" {
+		return nil
+	}
+
 	msg.Sign()
 	data, err := json.Marshal(msg)
 	if err != nil {
