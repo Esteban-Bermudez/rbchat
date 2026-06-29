@@ -188,6 +188,7 @@ func (m *Model) respondToSync() {
 				Text:      dbMsg.Text,
 				Timestamp: dbMsg.Timestamp,
 				MessageID: dbMsg.MessageID,
+				Signature: dbMsg.Signature,
 				Replay:    true,
 			})
 		}
@@ -257,6 +258,7 @@ func (m *Model) dbInsertMessage(msg network.Message) {
 		Team:      msg.Team,
 		Text:      msg.Text,
 		Timestamp: msg.Timestamp,
+		Signature: msg.Signature,
 	}); err != nil {
 		m.err = fmt.Errorf("db write: %v", err)
 	}

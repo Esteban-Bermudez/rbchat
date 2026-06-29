@@ -104,6 +104,7 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 				Text:      dbMsg.Text,
 				Timestamp: dbMsg.Timestamp,
 				MessageID: dbMsg.MessageID,
+				Signature: dbMsg.Signature,
 			}
 			seenIDs[msg.MessageID] = struct{}{}
 			messages = append(messages, msg)

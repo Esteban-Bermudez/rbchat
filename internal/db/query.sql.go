@@ -21,7 +21,7 @@ func (q *Queries) GetConfig(ctx context.Context, key string) (string, error) {
 }
 
 const getRecentMessagesForSync = `-- name: GetRecentMessagesForSync :many
-SELECT id, message_id, type, username, team, text, timestamp
+SELECT id, message_id, type, username, team, text, timestamp, signature
 FROM messages
 ORDER BY id DESC
 LIMIT ?
@@ -44,6 +44,7 @@ func (q *Queries) GetRecentMessagesForSync(ctx context.Context, limit int64) ([]
 			&i.Team,
 			&i.Text,
 			&i.Timestamp,
+			&i.Signature,
 		); err != nil {
 			return nil, err
 		}
@@ -59,7 +60,7 @@ func (q *Queries) GetRecentMessagesForSync(ctx context.Context, limit int64) ([]
 }
 
 const getRecentMessagesToday = `-- name: GetRecentMessagesToday :many
-SELECT id, message_id, type, username, team, text, timestamp
+SELECT id, message_id, type, username, team, text, timestamp, signature
 FROM messages
 WHERE date(timestamp) = date('now')
 ORDER BY id DESC
@@ -83,6 +84,7 @@ func (q *Queries) GetRecentMessagesToday(ctx context.Context, limit int64) ([]Me
 			&i.Team,
 			&i.Text,
 			&i.Timestamp,
+			&i.Signature,
 		); err != nil {
 			return nil, err
 		}
@@ -98,8 +100,8 @@ func (q *Queries) GetRecentMessagesToday(ctx context.Context, limit int64) ([]Me
 }
 
 const insertMessage = `-- name: InsertMessage :exec
-INSERT INTO messages (message_id, type, username, team, text, timestamp)
-VALUES (?, ?, ?, ?, ?, ?)
+INSERT INTO messages (message_id, type, username, team, text, timestamp, signature)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(message_id) DO NOTHING
 `
 
@@ -110,6 +112,7 @@ type InsertMessageParams struct {
 	Team      string
 	Text      string
 	Timestamp string
+	Signature string
 }
 
 func (q *Queries) InsertMessage(ctx context.Context, arg InsertMessageParams) error {
@@ -120,6 +123,7 @@ func (q *Queries) InsertMessage(ctx context.Context, arg InsertMessageParams) er
 		arg.Team,
 		arg.Text,
 		arg.Timestamp,
+		arg.Signature,
 	)
 	return err
 }

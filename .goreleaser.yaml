@@ -6,6 +6,8 @@ builds:
     binary: rbchat
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -X main.rbchatSecret={{ .Env.RBCHAT_SECRET }}
     goos:
       - darwin
       - linux

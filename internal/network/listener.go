@@ -43,6 +43,9 @@ func (l *Listener) Listen(ctx context.Context, msgCh chan<- IncomingMessage) {
 		if err := json.Unmarshal(buf[:n], &msg); err != nil {
 			continue
 		}
+		if !msg.Verify() {
+			continue
+		}
 		select {
 		case msgCh <- IncomingMessage{Message: msg, From: src}:
 		case <-ctx.Done():

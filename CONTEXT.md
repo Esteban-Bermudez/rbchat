@@ -34,11 +34,18 @@ Unified JSON structure for all wire traffic. The `type` field discriminates:
 
 | type | purpose |
 |------|---------|
-| `chat` | A user-to-user chat message. Displayed in the viewport. This is the only type broadcast during sync replays. |
-| `sync` | Sync request. Sent on startup to request history; peers respond by broadcasting their last 50 chat messages. Never displayed in the viewport and never appended to m.messages — stored in DB only. |
-| `join` | Self-announcement after setup completes. Displayed as a system message. Not synced as history. |
+| `chat` | A user-to-user chat message. Displayed in the viewport. |
+| `sync` | Sync request. Sent on startup to request history; peers respond by broadcasting their recent chat messages. Never displayed in the viewport and never appended to m.messages — stored in DB only. |
+| `join` | Self-announcement after setup completes. Displayed as a system message. |
 
-Fields: `type` (discriminator), `username`, `team`, `text`, `timestamp` (ISO 8601), `message_id` (UUID v4), `replay` (bool, omitempty).
+Fields: `type` (discriminator), `username`, `team`, `text`, `timestamp` (ISO 8601), `message_id` (UUID v4), `replay` (bool, omitempty), `signature` (string, omitempty — HMAC-SHA256 hex digest).
+
+## Message signing
+Every outgoing message is signed with HMAC-SHA256 using a shared secret (`RBCHAT_SECRET`). The HMAC is computed over `message_id + type + username + team + text + timestamp` (in that order, excluding `replay` and `signature`). The resulting hex digest is set as the `signature` field.
+
+On receipt, the listener recomputes the HMAC and verifies it against the stored signature. Messages with invalid or missing signatures are silently dropped when a secret is configured.
+
+The secret is injected at build time via `-ldflags -X main.rbchatSecret=...` (sourced from `RBCHAT_SECRET` env var in GoReleaser/CI). For local development it falls back to the `RBCHAT_SECRET` environment variable at runtime. When no secret is set, signing and verification are disabled entirely — all messages pass through unchanged.
 
 ## Replay flag
 A transient boolean on the wire format (`Message.Replay`). Set to `true` by `respondToSync()` for history replays. On receipt, suppresses desktop notifications and peer tracking so replaying old messages doesn't trigger alerts or inflate the online count. Never stored in the DB.
@@ -65,7 +72,7 @@ Before Bubble Tea starts, use simple `fmt.Print`/`bufio.Scanner` prompts:
 Local SQLite table with columns: `key` (TEXT PK), `value` (TEXT). Stores `username`, `team`, and any future per-user settings.
 
 ## messages table
-Local SQLite table with columns: `id` (INTEGER PK), `message_id` (TEXT, UNIQUE), `username` (TEXT), `team` (TEXT), `text` (TEXT), `timestamp` (TEXT).
+Local SQLite table with columns: `id` (INTEGER PK), `message_id` (TEXT, UNIQUE), `type` (TEXT), `username` (TEXT), `team` (TEXT), `text` (TEXT), `timestamp` (TEXT), `signature` (TEXT, DEFAULT '').
 
 ## Model.messages
 An in-memory `[]Message` slice. This is the source of truth for what the viewport displays. On startup, seeded from DB (last 50 **chat** messages from today — join/sync filtered out). During runtime, all message types (chat, join) are appended as they arrive in real-time. Capped at 10,000 messages — trims from the front when exceeded. The DB is the full archive; the slice is a rolling window. Sync-type messages are never appended to m.messages (stored in DB only).

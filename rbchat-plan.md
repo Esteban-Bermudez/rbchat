@@ -63,12 +63,14 @@ To ensure maximum portability and frictionless distribution across macOS and Win
 // Unified wire format — all traffic uses this struct.
 // The type field discriminates the purpose.
 type Message struct {
-    Type      string `json:"type"`      // "chat", "sync", or "join"
+    Type      string `json:"type"`        // "chat", "sync", or "join"
     Username  string `json:"username"`
     Team      string `json:"team"`
     Text      string `json:"text"`
-    Timestamp string `json:"timestamp"`  // ISO 8601
-    MessageID string `json:"message_id"` // UUID v4, used for dedup
+    Timestamp string `json:"timestamp"`   // ISO 8601
+    MessageID string `json:"message_id"`  // UUID v4, used for dedup
+    Replay    bool   `json:"replay,omitempty"`
+    Signature string `json:"signature,omitempty"` // HMAC-SHA256 hex digest
 }
 ```
 
@@ -150,6 +152,12 @@ Key layout details:
 * Configure `.goreleaser.yaml` — cross-compile for darwin/linux/windows, flattened archives.
 * GitHub Action (`.github/workflows/ci.yml`) — run `go vet`, build, and test on push/PR; create GitHub release on `v*` tag.
 * Write `install.sh` — curl-to-sh installer that fetches latest release and extracts to `~/.local/bin/`.
+
+## Message signing (HMAC-SHA256)
+
+All messages are signed with HMAC-SHA256 using a shared secret (`RBCHAT_SECRET`) to prevent DB tampering and external spoofing. The signature is computed over `message_id + type + username + team + text + timestamp` (excluding `replay` and `signature`). On receipt, the listener verifies the signature and drops invalid messages.
+
+The secret is injected at build time via `-ldflags -X main.rbchatSecret=...` (from `RBCHAT_SECRET` env var in GoReleaser/CI). For local dev it falls back to the `RBCHAT_SECRET` runtime env var. With no secret configured, signing and verification are disabled.
 
 ```
 ```

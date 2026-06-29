@@ -16,6 +16,8 @@ import (
 
 const multicastAddr = "224.0.0.1:9999"
 
+var rbchatSecret string
+
 func dataDir() string {
 	dataHome := os.Getenv("XDG_DATA_HOME")
 	if dataHome == "" {
@@ -68,6 +70,15 @@ func main() {
 
 	os.WriteFile(pidFile, []byte(fmt.Sprintf("%d", os.Getpid())), 0644)
 	defer os.Remove(pidFile)
+
+	if rbchatSecret == "" {
+		rbchatSecret = os.Getenv("RBCHAT_SECRET")
+	}
+	if rbchatSecret != "" {
+		network.SetSecret(rbchatSecret)
+	} else {
+		fmt.Fprintf(os.Stderr, "Warning: RBCHAT_SECRET not set — messages will not be signed\n")
+	}
 
 	username, team, err := tui.RunSetup(database)
 	if err != nil {

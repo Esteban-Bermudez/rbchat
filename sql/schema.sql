@@ -10,5 +10,6 @@ CREATE TABLE IF NOT EXISTS messages (
     username   TEXT NOT NULL,
     team       TEXT NOT NULL DEFAULT '',
     text       TEXT NOT NULL,
-    timestamp  TEXT NOT NULL
+    timestamp  TEXT NOT NULL,
+    signature  TEXT NOT NULL DEFAULT ''
 );
