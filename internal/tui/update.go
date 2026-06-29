@@ -63,6 +63,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+n":
 			m.notificationsEnabled = !m.notificationsEnabled
 			return m, nil
+		case "ctrl+u":
+			m.viewport.HalfViewUp()
+			return m, nil
+		case "ctrl+d":
+			m.viewport.HalfViewDown()
+			return m, nil
+		case "pgup":
+			m.viewport.PageUp()
+			return m, nil
+		case "pgdown":
+			m.viewport.PageDown()
+			return m, nil
 		case "enter":
 			if m.syncing {
 				return m, nil
@@ -92,6 +104,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.appendMessage(chatMsg)
 			m.dbInsertMessage(chatMsg)
 			m.refreshViewport()
+			m.viewport.GotoBottom()
 			return m, WaitForNetworkMsg(m.msgCh)
 		}
 
@@ -249,8 +262,11 @@ func (m *Model) refreshViewport() {
 		}
 		content += rendered + "\n"
 	}
+	atBottom := m.viewport.AtBottom()
 	m.viewport.SetContent(content)
-	m.viewport.GotoBottom()
+	if atBottom {
+		m.viewport.GotoBottom()
+	}
 }
 
 func (m *Model) countActivePeers() int {

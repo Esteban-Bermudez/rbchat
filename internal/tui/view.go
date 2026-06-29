@@ -113,7 +113,7 @@ func (m Model) View() string {
 	if m.err != nil {
 		inputField = errorStyle.Render(fmt.Sprintf("⚠ %v", m.err)) + "\n"
 	}
-	inputField += helpStyle.Render("ctrl+n: toggle notifications") + "\n"
+	inputField += helpStyle.Render("ctrl+n: toggle · ctrl+u/ctrl+d: scroll · pgup/pgdn: page") + "\n"
 	inputField += m.input.View()
 
 	return title + chatContent + "\n" + inputField
