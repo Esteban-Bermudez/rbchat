@@ -17,6 +17,7 @@ const (
 	syncTimeout   = 2 * time.Second
 	peerWindow    = 60 * time.Second
 	multicastAddr = "224.0.0.1:9999"
+	helpHeight    = 9
 )
 
 func (m Model) Init() tea.Cmd {
@@ -40,13 +41,17 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		vpHeight := msg.Height - 5
+		if m.showHelp {
+			vpHeight -= helpHeight
+		}
 		if !m.ready {
-			m.viewport = viewport.New(msg.Width, msg.Height-5)
+			m.viewport = viewport.New(msg.Width, vpHeight)
 			m.viewport.YPosition = 0
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - 5
+			m.viewport.Height = vpHeight
 		}
 		m.input.Width = msg.Width - 2
 		return m, nil
@@ -74,6 +79,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "pgdown":
 			m.viewport.PageDown()
+			return m, nil
+		case "?":
+			m.showHelp = !m.showHelp
+			if m.ready {
+				if m.showHelp {
+					m.viewport.Height -= helpHeight
+				} else {
+					m.viewport.Height += helpHeight
+				}
+			}
 			return m, nil
 		case "enter":
 			if m.syncing {

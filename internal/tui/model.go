@@ -69,6 +69,7 @@ type Model struct {
 	ready                bool
 	notificationsEnabled bool
 	otherInstanceRunning bool
+	showHelp             bool
 }
 
 func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool) Model {

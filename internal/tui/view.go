@@ -101,7 +101,8 @@ func (m Model) View() string {
 	}
 	title := titleStyle.Render(fmt.Sprintf(" rbchat | %s | ", multicastAddr)) +
 		bell +
-		titleStyle.Render(fmt.Sprintf(" | %d peers ", m.peerCount))
+		titleStyle.Render(fmt.Sprintf(" | %d peers ", m.peerCount)) +
+		titleStyle.Render(" ? for help ")
 	title += "\n"
 
 	separator := strings.Repeat("─", m.viewport.Width)
@@ -113,8 +114,10 @@ func (m Model) View() string {
 	if m.err != nil {
 		inputField = errorStyle.Render(fmt.Sprintf("⚠ %v", m.err)) + "\n"
 	}
-	inputField += helpStyle.Render("ctrl+n: toggle · ctrl+u/ctrl+d: scroll · pgup/pgdn: page") + "\n"
 	inputField += m.input.View()
+	if m.showHelp {
+		inputField += "\n" + helpPanel(m.viewport.Width)
+	}
 
 	return title + chatContent + "\n" + inputField
 }
@@ -178,6 +181,43 @@ func messageDate(ts string) string {
 		return ""
 	}
 	return parsed.Format("Jan 2, 2006")
+}
+
+func helpPanel(width int) string {
+	if width <= 0 {
+		width = 60
+	}
+	header := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FBBF24")).
+		Render(" Keybindings ")
+	line := dividerStyle.Render(strings.Repeat("─", width-lipgloss.Width(header)))
+	header = line[:1] + header + line[1+lipgloss.Width(header):]
+
+	items := []struct{ key, desc string }{
+		{"ctrl+n", "Toggle notifications"},
+		{"enter", "Send message"},
+		{"ctrl+u", "Scroll up (half page)"},
+		{"ctrl+d", "Scroll down (half page)"},
+		{"pgup", "Page up"},
+		{"pgdown", "Page down"},
+		{"ctrl+c", "Quit"},
+		{"?", "Close this help"},
+	}
+	keyStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#10B981"))
+	descStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#9CA3AF"))
+
+	var body string
+	for _, it := range items {
+		body += fmt.Sprintf("  %s  %s\n",
+			keyStyle.Render(fmt.Sprintf("%-8s", it.key)),
+			descStyle.Render(it.desc),
+		)
+	}
+
+	return header + "\n" + body + dividerStyle.Render(strings.Repeat("─", width))
 }
 
 func wrapText(text string, width int) string {
