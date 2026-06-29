@@ -21,6 +21,7 @@ func Init(dataDir string) (*sql.DB, error) {
 	if _, err := database.ExecContext(context.Background(), schema); err != nil {
 		return nil, err
 	}
+	database.ExecContext(context.Background(), "ALTER TABLE messages ADD COLUMN signature TEXT NOT NULL DEFAULT ''")
 	if _, err := database.ExecContext(context.Background(), "PRAGMA journal_mode=WAL"); err != nil {
 		return nil, err
 	}
