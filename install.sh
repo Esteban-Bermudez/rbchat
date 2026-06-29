@@ -80,20 +80,22 @@ download_and_install() {
   case "$OS" in
     windows)
       unzip -q "$ARCHIVE"
-      mv "${BIN}.exe" "$BIN"
-      echo "Extracted $BIN.exe — move it somewhere in your PATH."
+      if [ -f "${BIN}.exe" ]; then
+        mkdir -p "$INSTALL_DIR"
+        mv "${BIN}.exe" "$INSTALL_DIR/${BIN}.exe"
+        echo "Installed $BIN.exe to $INSTALL_DIR/${BIN}.exe"
+      fi
       ;;
     *)
       tar -xzf "$ARCHIVE"
       chmod +x "$BIN"
+      if [ -f "$BIN" ]; then
+        mkdir -p "$INSTALL_DIR"
+        mv "$BIN" "$INSTALL_DIR/$BIN"
+        echo "Installed $BIN to $INSTALL_DIR/$BIN"
+      fi
       ;;
   esac
-
-  if [ -f "$BIN" ]; then
-    mkdir -p "$INSTALL_DIR"
-    mv "$BIN" "$INSTALL_DIR/$BIN"
-    echo "Installed $BIN to $INSTALL_DIR/$BIN"
-  fi
 
   rm -rf "$TMPDIR"
 }
