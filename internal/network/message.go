@@ -9,9 +9,7 @@ import (
 var secret []byte
 
 func SetSecret(s string) {
-	if s != "" {
-		secret = []byte(s)
-	}
+	secret = []byte(s)
 }
 
 func SigningEnabled() bool {

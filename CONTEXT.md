@@ -43,7 +43,7 @@ Fields: `type` (discriminator), `username`, `team`, `text`, `timestamp` (ISO 860
 ## Message signing
 Every outgoing message is signed with HMAC-SHA256 using a shared secret (`RBCHAT_SECRET`). The HMAC is computed over `message_id + type + username + team + text + timestamp` (in that order, excluding `replay` and `signature`). The resulting hex digest is set as the `signature` field.
 
-On receipt, the listener recomputes the HMAC and verifies it against the stored signature. Messages with invalid or missing signatures are silently dropped when a secret is configured.
+On receipt, the listener recomputes the HMAC and verifies it against the stored signature. Messages with invalid or missing signatures are silently dropped when a secret is configured. Messages loaded from the local DB are also revalidated against the current secret before display or sync replay; a non-empty signature alone is not trusted.
 
 The secret is injected at build time via `-ldflags -X main.rbchatSecret=...` (sourced from `RBCHAT_SECRET` env var in GoReleaser/CI). When no secret is set, signing and verification are disabled entirely — all messages pass through unchanged.
 

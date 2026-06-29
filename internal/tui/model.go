@@ -109,6 +109,9 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 				MessageID: dbMsg.MessageID,
 				Signature: dbMsg.Signature,
 			}
+			if !msg.Verify() {
+				continue
+			}
 			seenIDs[msg.MessageID] = struct{}{}
 			messages = append(messages, msg)
 		}
@@ -126,7 +129,7 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 		messages:             messages,
 		seenIDs:              seenIDs,
 		input:                ti,
-		syncing: true,
+		syncing:              true,
 		lastSeen:             make(map[string]time.Time),
 		notificationsEnabled: notificationsEnabled,
 		otherInstanceRunning: otherInstanceRunning,

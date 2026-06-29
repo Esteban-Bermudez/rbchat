@@ -155,9 +155,9 @@ Key layout details:
 
 ## Message signing (HMAC-SHA256)
 
-All messages are signed with HMAC-SHA256 using a shared secret (`RBCHAT_SECRET`) to prevent DB tampering and external spoofing. The signature is computed over `message_id + type + username + team + text + timestamp` (excluding `replay` and `signature`). On receipt, the listener verifies the signature and drops invalid messages.
+All messages are signed with HMAC-SHA256 using a shared secret (`RBCHAT_SECRET`) to prevent DB tampering and external spoofing. The signature is computed over `message_id + type + username + team + text + timestamp` (excluding `replay` and `signature`). On receipt, the listener verifies the signature and drops invalid messages. DB-backed messages are revalidated against the current secret before they are displayed or replayed during sync.
 
-The secret is injected at build time via `-ldflags -X main.rbchatSecret=...` (from `RBCHAT_SECRET` env var in GoReleaser/CI). For local dev it falls back to the `RBCHAT_SECRET` runtime env var. With no secret configured, signing and verification are disabled.
+The secret is injected at build time via `-ldflags -X main.rbchatSecret=...` (from `RBCHAT_SECRET` env var in GoReleaser/CI). With no build-time secret configured, signing and verification are disabled for local development.
 
 ```
 ```

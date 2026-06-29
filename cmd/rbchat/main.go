@@ -71,9 +71,7 @@ func main() {
 	os.WriteFile(pidFile, []byte(fmt.Sprintf("%d", os.Getpid())), 0644)
 	defer os.Remove(pidFile)
 
-	if rbchatSecret != "" {
-		network.SetSecret(rbchatSecret)
-	}
+	network.SetSecret(rbchatSecret)
 
 	username, team, err := tui.RunSetup(database)
 	if err != nil {

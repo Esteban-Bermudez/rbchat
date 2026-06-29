@@ -185,7 +185,7 @@ func (m *Model) respondToSync() {
 			msgType = "join"
 		}
 		if msgType == "chat" || msgType == "join" {
-			m.broadcaster.Send(network.Message{
+			msg := network.Message{
 				Type:      msgType,
 				Username:  dbMsg.Username,
 				Team:      dbMsg.Team,
@@ -194,7 +194,11 @@ func (m *Model) respondToSync() {
 				MessageID: dbMsg.MessageID,
 				Signature: dbMsg.Signature,
 				Replay:    true,
-			})
+			}
+			if !msg.Verify() {
+				continue
+			}
+			m.broadcaster.Send(msg)
 		}
 	}
 }
@@ -243,7 +247,7 @@ func (m *Model) handleIncoming(msg network.Message) {
 }
 
 func (m *Model) appendMessage(msg network.Message) {
-	if msg.Signature == "" {
+	if !msg.Verify() {
 		return
 	}
 	if _, seen := m.seenIDs[msg.MessageID]; seen {
@@ -257,6 +261,9 @@ func (m *Model) appendMessage(msg network.Message) {
 }
 
 func (m *Model) dbInsertMessage(msg network.Message) {
+	if !msg.Verify() {
+		return
+	}
 	q := db.New(m.db)
 	if err := q.InsertMessage(m.ctx, db.InsertMessageParams{
 		MessageID: msg.MessageID,
