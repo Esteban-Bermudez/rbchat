@@ -81,15 +81,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.PageDown()
 			return m, nil
 		case "?":
-			m.showHelp = !m.showHelp
-			if m.ready {
-				if m.showHelp {
-					m.viewport.Height -= helpHeight
-				} else {
-					m.viewport.Height += helpHeight
+			if m.showHelp || m.input.Value() == "" {
+				m.showHelp = !m.showHelp
+				if m.ready {
+					if m.showHelp {
+						m.viewport.Height -= helpHeight
+					} else {
+						m.viewport.Height += helpHeight
+					}
 				}
+				return m, nil
 			}
-			return m, nil
 		case "enter":
 			if m.syncing {
 				return m, nil
