@@ -10,7 +10,7 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X main.rbchatSecret={{ .Env.RBCHAT_SECRET }}
+      - -X main.rbchatSecretXor={{ .Env.RBCHAT_SECRET_XOR }}
       - -X main.version={{ .Version }}
       - -X main.commit={{ .Commit }}
       - -X main.date={{ .Date }}

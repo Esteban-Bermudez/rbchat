@@ -17,10 +17,11 @@ import (
 const multicastAddr = "224.0.0.1:9999"
 
 var (
-	rbchatSecret string
-	version      = "dev"
-	commit       = "none"
-	date         = "unknown"
+	rbchatSecret    string
+	rbchatSecretXor string
+	version         = "dev"
+	commit          = "none"
+	date            = "unknown"
 )
 
 func printVersion() {
@@ -96,7 +97,14 @@ func main() {
 	os.WriteFile(pidFile, []byte(fmt.Sprintf("%d", os.Getpid())), 0644)
 	defer os.Remove(pidFile)
 
-	network.SetSecret(rbchatSecret)
+	if rbchatSecretXor != "" {
+		plainSecret, err := network.DecodeObfuscatedHex(rbchatSecretXor)
+		if err == nil {
+			network.SetSecret(plainSecret)
+		}
+	} else if rbchatSecret != "" {
+		network.SetSecret(rbchatSecret)
+	}
 
 	username, team, err := tui.RunSetup(database)
 	if err != nil {

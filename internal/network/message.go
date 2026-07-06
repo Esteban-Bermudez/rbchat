@@ -6,14 +6,18 @@ import (
 	"encoding/hex"
 )
 
-var secret []byte
+var obfuscatedSecret []byte
 
 func SetSecret(s string) {
-	secret = []byte(s)
+	obfuscatedSecret = xorBytes([]byte(s))
+}
+
+func signingSecret() []byte {
+	return xorBytes(obfuscatedSecret)
 }
 
 func SigningEnabled() bool {
-	return len(secret) > 0
+	return len(obfuscatedSecret) > 0
 }
 
 type Message struct {
@@ -29,10 +33,11 @@ type Message struct {
 }
 
 func (m *Message) Sign() {
-	if len(secret) == 0 {
+	s := signingSecret()
+	if len(s) == 0 {
 		return
 	}
-	h := hmac.New(sha256.New, secret)
+	h := hmac.New(sha256.New, s)
 	h.Write([]byte(m.MessageID))
 	h.Write([]byte(m.Type))
 	h.Write([]byte(m.Username))
@@ -43,10 +48,11 @@ func (m *Message) Sign() {
 }
 
 func (m *Message) Verify() bool {
-	if len(secret) == 0 {
+	s := signingSecret()
+	if len(s) == 0 {
 		return true
 	}
-	h := hmac.New(sha256.New, secret)
+	h := hmac.New(sha256.New, s)
 	h.Write([]byte(m.MessageID))
 	h.Write([]byte(m.Type))
 	h.Write([]byte(m.Username))

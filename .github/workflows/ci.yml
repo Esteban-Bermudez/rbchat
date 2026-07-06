@@ -27,10 +27,14 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: stable
+      - name: Obfuscate HMAC secret
+        run: |
+          XORED=$(RBCHAT_SECRET="${{ secrets.RBCHAT_SECRET }}" ./scripts/xor_secret.sh)
+          echo "RBCHAT_SECRET_XOR=$XORED" >> $GITHUB_ENV
       - uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RBCHAT_SECRET: ${{ secrets.RBCHAT_SECRET }}
+          RBCHAT_SECRET_XOR: ${{ env.RBCHAT_SECRET_XOR }}
