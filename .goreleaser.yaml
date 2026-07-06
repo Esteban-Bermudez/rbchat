@@ -6,7 +6,10 @@ builds:
     binary: rbchat
     env:
       - CGO_ENABLED=0
+    flags:
+      - -trimpath
     ldflags:
+      - -s -w
       - -X main.rbchatSecret={{ .Env.RBCHAT_SECRET }}
       - -X main.version={{ .Version }}
       - -X main.commit={{ .Commit }}
