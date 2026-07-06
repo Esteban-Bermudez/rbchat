@@ -164,26 +164,17 @@ func renderMessage(msg network.Message, width int) string {
 			teamPart = teamStyle(msg.Team).Render(" (" + msg.Team + ")")
 		}
 		header := fmt.Sprintf("%s%s:", user, teamPart)
+		left := fmt.Sprintf("%s %s", header, msgStyle.Render(msg.Text))
 		if width > 0 {
+			leftWidth := lipgloss.Width(left)
 			tsWidth := lipgloss.Width(ts)
-			headerWidth := lipgloss.Width(header)
-			pad := width - headerWidth - tsWidth
+			pad := width - leftWidth - tsWidth
 			if pad < 1 {
 				pad = 1
 			}
-			firstLine := header + strings.Repeat(" ", pad) + ts
-			textWidth := width - 2
-			if textWidth < 10 {
-				textWidth = 10
-			}
-			wrapped := wrapText(msg.Text, textWidth)
-			lines := strings.Split(wrapped, "\n")
-			for i := range lines {
-				lines[i] = "  " + msgStyle.Render(lines[i])
-			}
-			return firstLine + "\n" + strings.Join(lines, "\n")
+			return left + strings.Repeat(" ", pad) + ts
 		}
-		return fmt.Sprintf("%s%s %s", header, ts, msgStyle.Render(" "+msg.Text))
+		return fmt.Sprintf("%s %s", left, ts)
 
 	case "sync":
 		return ""
