@@ -99,10 +99,16 @@ func (m Model) View() string {
 	} else {
 		bell = bellOffStyle.Render("🔕")
 	}
+	var versionStr string
+	if m.version == "" || m.version == "dev" {
+		versionStr = "dev"
+	} else {
+		versionStr = "v" + m.version
+	}
 	title := titleStyle.Render(fmt.Sprintf(" rbchat | %s | ", multicastAddr)) +
 		bell +
 		titleStyle.Render(fmt.Sprintf(" | %d peers ", m.peerCount)) +
-		titleStyle.Render(" ? for help ")
+		titleStyle.Render(fmt.Sprintf(" | %s ", versionStr))
 	title += "\n"
 
 	separator := strings.Repeat("─", m.viewport.Width)

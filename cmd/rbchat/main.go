@@ -121,7 +121,7 @@ func main() {
 
 	networkID := network.ComputeNetworkID()
 
-	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel, notificationsEnabled, otherInstanceRunning, networkID)
+	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel, notificationsEnabled, otherInstanceRunning, networkID, version)
 
 	go listener.Listen(ctx, msgCh)
 

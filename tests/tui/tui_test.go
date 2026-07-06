@@ -113,7 +113,7 @@ func TestNewModelOnlyRendersMessagesMatchingNetworkID(t *testing.T) {
 	insertMessage(t, q, ctx, home)
 	insertMessage(t, q, ctx, untagged)
 
-	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "office-net")
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "office-net", "dev")
 	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
 	view := updated.View()
@@ -172,7 +172,7 @@ func TestNewModelOnlyRendersMessagesSignedWithCurrentSecret(t *testing.T) {
 		MessageID: "unsigned-message",
 	})
 
-	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "")
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "", "dev")
 	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
 	view := updated.View()

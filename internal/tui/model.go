@@ -71,9 +71,10 @@ type Model struct {
 	otherInstanceRunning bool
 	showHelp             bool
 	networkID            string
+	version              string
 }
 
-func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID string) Model {
+func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID, version string) Model {
 	ti := textinput.New()
 	ti.Placeholder = "Type a message..."
 	ti.Focus()
@@ -138,5 +139,6 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 		notificationsEnabled: notificationsEnabled,
 		otherInstanceRunning: otherInstanceRunning,
 		networkID:            networkID,
+		version:              version,
 	}
 }
