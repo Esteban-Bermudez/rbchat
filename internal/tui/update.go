@@ -3,10 +3,12 @@ package tui
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/esteban/rbchat/internal/db"
 	"github.com/esteban/rbchat/internal/network"
 	"github.com/google/uuid"
@@ -299,7 +301,16 @@ func (m *Model) refreshViewport() {
 		}
 		date := messageDate(msg.Timestamp)
 		if date != "" && date != lastDate && lastDate != "" {
-			content += dividerStyle.Render(fmt.Sprintf("── %s ──", date)) + "\n"
+			dateStr := fmt.Sprintf("     %s     ", date)
+			dateLen := lipgloss.Width(dateStr)
+			dashes := m.viewport.Width - dateLen
+			if dashes > 0 {
+				leftDashes := dashes / 2
+				rightDashes := dashes - leftDashes
+				content += "\n" + dividerStyle.Render(strings.Repeat("─", leftDashes)+dateStr+strings.Repeat("─", rightDashes)) + "\n"
+			} else {
+				content += "\n" + dividerStyle.Render(dateStr) + "\n"
+			}
 		}
 		if date != "" {
 			lastDate = date

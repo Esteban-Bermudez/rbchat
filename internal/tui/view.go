@@ -137,7 +137,17 @@ func renderMessage(msg network.Message, width int) string {
 			teamPart = teamStyle(msg.Team).Render(" (" + msg.Team + ")")
 		}
 		text := systemStyle.Render(" " + msg.Text)
-		return fmt.Sprintf("%s %s%s%s", ts, user, teamPart, text)
+		left := fmt.Sprintf("%s%s%s", user, teamPart, text)
+		if width > 0 {
+			leftWidth := lipgloss.Width(left)
+			tsWidth := lipgloss.Width(ts)
+			pad := width - leftWidth - tsWidth
+			if pad < 1 {
+				pad = 1
+			}
+			return left + strings.Repeat(" ", pad) + ts
+		}
+		return fmt.Sprintf("%s %s", left, ts)
 
 	case "chat":
 		t := parseTimestamp(msg.Timestamp)
@@ -147,17 +157,27 @@ func renderMessage(msg network.Message, width int) string {
 		if msg.Team != "" {
 			teamPart = teamStyle(msg.Team).Render(" (" + msg.Team + ")")
 		}
-		prefix := fmt.Sprintf("%s %s%s:", ts, user, teamPart)
-		text := msg.Text
+		header := fmt.Sprintf("%s%s:", user, teamPart)
 		if width > 0 {
-			prefixWidth := lipgloss.Width(prefix)
-			textWidth := width - prefixWidth - 2
+			tsWidth := lipgloss.Width(ts)
+			headerWidth := lipgloss.Width(header)
+			pad := width - headerWidth - tsWidth
+			if pad < 1 {
+				pad = 1
+			}
+			firstLine := header + strings.Repeat(" ", pad) + ts
+			textWidth := width - 2
 			if textWidth < 10 {
 				textWidth = 10
 			}
-			text = wrapText(text, textWidth)
+			wrapped := wrapText(msg.Text, textWidth)
+			lines := strings.Split(wrapped, "\n")
+			for i := range lines {
+				lines[i] = "  " + msgStyle.Render(lines[i])
+			}
+			return firstLine + "\n" + strings.Join(lines, "\n")
 		}
-		return fmt.Sprintf("%s %s%s%s", ts, user, teamPart, msgStyle.Render(" "+text))
+		return fmt.Sprintf("%s%s %s", header, ts, msgStyle.Render(" "+msg.Text))
 
 	case "sync":
 		return ""
