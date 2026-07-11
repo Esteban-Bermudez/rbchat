@@ -33,6 +33,24 @@ func printVersion() {
 	fmt.Printf("rbchat v%s (commit %s, built %s)\n", version, commit, date)
 }
 
+func printHelp() {
+	fmt.Println(`rbchat — Zero-config LAN chat over UDP multicast
+
+Usage:
+  rbchat [flags]
+  rbchat update
+
+Flags:
+  --version, -v         Print version and exit
+  --help, -h            Print this help and exit
+  --no-notify           Disable desktop notifications
+  --icons=nerd|text|emoji|off
+                        OS icon style for chat peers (default "nerd")
+
+Commands:
+  update                Self-update to the latest release`)
+}
+
 func dataDir() string {
 	dataHome := os.Getenv("XDG_DATA_HOME")
 	if dataHome == "" {
@@ -44,14 +62,23 @@ func dataDir() string {
 
 func main() {
 	for _, arg := range os.Args[1:] {
-		if arg == "--version" || arg == "-v" {
+		switch arg {
+		case "--version", "-v":
 			printVersion()
+			return
+		case "--help", "-h":
+			printHelp()
 			return
 		}
 	}
 
 	if len(os.Args) > 1 && os.Args[1] == "update" {
 		cmdUpdate()
+		return
+	}
+
+	if len(os.Args) > 1 && os.Args[1] == "help" {
+		printHelp()
 		return
 	}
 
