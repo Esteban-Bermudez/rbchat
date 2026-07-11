@@ -102,7 +102,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			text := m.input.Value()
-			if text == "" {
+			if strings.TrimSpace(text) == "" {
 				return m, nil
 			}
 			m.input.SetValue("")
