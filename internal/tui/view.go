@@ -50,6 +50,52 @@ var (
 			Foreground(lipgloss.Color("#6B7280"))
 )
 
+var (
+	nerdIcons = map[string]string{
+		"darwin":  "\U000f0179",
+		"windows": "\U000f017a",
+		"linux":   "\U000f017c",
+	}
+
+	txtIcons = map[string]string{
+		"darwin":  "[mac]",
+		"windows": "[win]",
+		"linux":   "[lnx]",
+	}
+
+	emojiIcons = map[string]string{
+		"darwin":  "\U0001f34e",
+		"windows": "\U0001fa9f",
+		"linux":   "\U0001f427",
+	}
+)
+
+func osIcon(os, mode string) string {
+	if os == "" {
+		return ""
+	}
+	var m map[string]string
+	switch mode {
+	case "nerd":
+		m = nerdIcons
+	case "text":
+		m = txtIcons
+	case "emoji":
+		m = emojiIcons
+	default:
+		return ""
+	}
+	return m[os]
+}
+
+func rightSide(os, mode, ts string) string {
+	icon := osIcon(os, mode)
+	if icon == "" {
+		return ts
+	}
+	return timestampStyle.Render(icon) + " " + ts
+}
+
 var teamColors = map[string]lipgloss.Color{
 	"Animoto":   "#FFD700",
 	"Delivra":   "#00CED1",
@@ -129,10 +175,10 @@ func (m Model) View() string {
 }
 
 func RenderMessage(msg network.Message) string {
-	return renderMessage(msg, 0)
+	return renderMessage(msg, 0, "")
 }
 
-func renderMessage(msg network.Message, width int) string {
+func renderMessage(msg network.Message, width int, osIconMode string) string {
 	switch msg.Type {
 	case "join":
 		t := parseTimestamp(msg.Timestamp)
@@ -144,16 +190,17 @@ func renderMessage(msg network.Message, width int) string {
 		}
 		text := systemStyle.Render(" " + msg.Text)
 		left := fmt.Sprintf("%s%s%s", user, teamPart, text)
+		right := rightSide(msg.OS, osIconMode, ts)
 		if width > 0 {
 			leftWidth := lipgloss.Width(left)
-			tsWidth := lipgloss.Width(ts)
-			pad := width - leftWidth - tsWidth
+			rightWidth := lipgloss.Width(right)
+			pad := width - leftWidth - rightWidth
 			if pad < 1 {
 				pad = 1
 			}
-			return left + strings.Repeat(" ", pad) + ts
+			return left + strings.Repeat(" ", pad) + right
 		}
-		return fmt.Sprintf("%s %s", left, ts)
+		return fmt.Sprintf("%s %s", left, right)
 
 	case "chat":
 		t := parseTimestamp(msg.Timestamp)
@@ -165,16 +212,17 @@ func renderMessage(msg network.Message, width int) string {
 		}
 		header := fmt.Sprintf("%s%s:", user, teamPart)
 		left := fmt.Sprintf("%s %s", header, msgStyle.Render(msg.Text))
+		right := rightSide(msg.OS, osIconMode, ts)
 		if width > 0 {
 			leftWidth := lipgloss.Width(left)
-			tsWidth := lipgloss.Width(ts)
-			pad := width - leftWidth - tsWidth
+			rightWidth := lipgloss.Width(right)
+			pad := width - leftWidth - rightWidth
 			if pad < 1 {
 				pad = 1
 			}
-			return left + strings.Repeat(" ", pad) + ts
+			return left + strings.Repeat(" ", pad) + right
 		}
-		return fmt.Sprintf("%s %s", left, ts)
+		return fmt.Sprintf("%s %s", left, right)
 
 	case "sync":
 		return ""

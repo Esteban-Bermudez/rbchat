@@ -113,7 +113,7 @@ func TestNewModelOnlyRendersMessagesMatchingNetworkID(t *testing.T) {
 	insertMessage(t, q, ctx, home)
 	insertMessage(t, q, ctx, untagged)
 
-	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "office-net", "dev")
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "office-net", "dev", "nerd")
 	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
 	view := updated.View()
@@ -172,7 +172,7 @@ func TestNewModelOnlyRendersMessagesSignedWithCurrentSecret(t *testing.T) {
 		MessageID: "unsigned-message",
 	})
 
-	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "", "dev")
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "", "dev", "nerd")
 	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
 	view := updated.View()
@@ -207,6 +207,7 @@ func setupDB(t *testing.T) *sql.DB {
 			team       TEXT NOT NULL DEFAULT '',
 			text       TEXT NOT NULL,
 			timestamp  TEXT NOT NULL,
+			os         TEXT NOT NULL DEFAULT '',
 			signature  TEXT NOT NULL DEFAULT '',
 			network_id TEXT NOT NULL DEFAULT ''
 		);
@@ -226,6 +227,7 @@ func insertMessage(t *testing.T, q *db.Queries, ctx context.Context, msg network
 		Team:      msg.Team,
 		Text:      msg.Text,
 		Timestamp: msg.Timestamp,
+		Os:        msg.OS,
 		Signature: msg.Signature,
 		NetworkID: msg.NetworkID,
 	}); err != nil {

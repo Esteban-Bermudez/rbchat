@@ -72,9 +72,10 @@ type Model struct {
 	showHelp             bool
 	networkID            string
 	version              string
+	osIconMode           string
 }
 
-func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID, version string) Model {
+func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID, version string, osIconMode string) Model {
 	ti := textinput.New()
 	ti.Placeholder = "Type a message..."
 	ti.Focus()
@@ -112,6 +113,7 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 				Text:      dbMsg.Text,
 				Timestamp: dbMsg.Timestamp,
 				MessageID: dbMsg.MessageID,
+				OS:        dbMsg.Os,
 				Signature: dbMsg.Signature,
 			}
 			if !msg.Verify() {

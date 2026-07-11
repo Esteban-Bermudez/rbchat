@@ -21,7 +21,7 @@ func (q *Queries) GetConfig(ctx context.Context, key string) (string, error) {
 }
 
 const getRecentMessagesForSync = `-- name: GetRecentMessagesForSync :many
-SELECT id, message_id, type, username, team, text, timestamp, signature, network_id
+SELECT id, message_id, type, username, team, text, timestamp, os, signature, network_id
 FROM messages
 WHERE signature != ''
   AND network_id = ?
@@ -51,6 +51,7 @@ func (q *Queries) GetRecentMessagesForSync(ctx context.Context, arg GetRecentMes
 			&i.Team,
 			&i.Text,
 			&i.Timestamp,
+			&i.Os,
 			&i.Signature,
 			&i.NetworkID,
 		); err != nil {
@@ -68,7 +69,7 @@ func (q *Queries) GetRecentMessagesForSync(ctx context.Context, arg GetRecentMes
 }
 
 const getRecentMessagesToday = `-- name: GetRecentMessagesToday :many
-SELECT id, message_id, type, username, team, text, timestamp, signature, network_id
+SELECT id, message_id, type, username, team, text, timestamp, os, signature, network_id
 FROM messages
 WHERE date(timestamp) = date('now')
   AND signature != ''
@@ -99,6 +100,7 @@ func (q *Queries) GetRecentMessagesToday(ctx context.Context, arg GetRecentMessa
 			&i.Team,
 			&i.Text,
 			&i.Timestamp,
+			&i.Os,
 			&i.Signature,
 			&i.NetworkID,
 		); err != nil {
@@ -116,8 +118,8 @@ func (q *Queries) GetRecentMessagesToday(ctx context.Context, arg GetRecentMessa
 }
 
 const insertMessage = `-- name: InsertMessage :exec
-INSERT INTO messages (message_id, type, username, team, text, timestamp, signature, network_id)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO messages (message_id, type, username, team, text, timestamp, os, signature, network_id)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(message_id) DO NOTHING
 `
 
@@ -128,6 +130,7 @@ type InsertMessageParams struct {
 	Team      string
 	Text      string
 	Timestamp string
+	Os        string
 	Signature string
 	NetworkID string
 }
@@ -140,6 +143,7 @@ func (q *Queries) InsertMessage(ctx context.Context, arg InsertMessageParams) er
 		arg.Team,
 		arg.Text,
 		arg.Timestamp,
+		arg.Os,
 		arg.Signature,
 		arg.NetworkID,
 	)

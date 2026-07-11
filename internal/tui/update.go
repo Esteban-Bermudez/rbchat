@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -31,6 +32,7 @@ func (m Model) Init() tea.Cmd {
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 		MessageID: uuid.New().String(),
 		NetworkID: m.networkID,
+		OS:        runtime.GOOS,
 	})
 
 	return tea.Batch(
@@ -113,6 +115,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				Timestamp: time.Now().UTC().Format(time.RFC3339),
 				MessageID: uuid.New().String(),
 				NetworkID: m.networkID,
+				OS:        runtime.GOOS,
 			}
 			chatMsg.Sign()
 
@@ -160,6 +163,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				Timestamp: time.Now().UTC().Format(time.RFC3339),
 				MessageID: uuid.New().String(),
 				NetworkID: m.networkID,
+				OS:        runtime.GOOS,
 			})
 		}
 		return m, WaitForNetworkMsg(m.msgCh)
@@ -200,6 +204,7 @@ func (m *Model) respondToSync() {
 				Text:      dbMsg.Text,
 				Timestamp: dbMsg.Timestamp,
 				MessageID: dbMsg.MessageID,
+				OS:        dbMsg.Os,
 				Signature: dbMsg.Signature,
 				Replay:    true,
 			}
@@ -284,6 +289,7 @@ func (m *Model) dbInsertMessage(msg network.Message) {
 		Team:      msg.Team,
 		Text:      msg.Text,
 		Timestamp: msg.Timestamp,
+		Os:        msg.OS,
 		Signature: msg.Signature,
 		NetworkID: m.networkID,
 	}); err != nil {
@@ -295,7 +301,7 @@ func (m *Model) refreshViewport() {
 	var content string
 	var lastDate string
 	for _, msg := range m.messages {
-		rendered := renderMessage(msg, m.viewport.Width)
+		rendered := renderMessage(msg, m.viewport.Width, m.osIconMode)
 		if rendered == "" {
 			continue
 		}

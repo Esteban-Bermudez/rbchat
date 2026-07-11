@@ -17,6 +17,7 @@ type Message struct {
 	Team      string
 	Text      string
 	Timestamp string
+	Os        string
 	Signature string
 	NetworkID string
 }

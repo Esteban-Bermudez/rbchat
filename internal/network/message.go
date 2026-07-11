@@ -29,6 +29,7 @@ type Message struct {
 	MessageID string `json:"message_id"`
 	NetworkID string `json:"network_id,omitempty"`
 	Replay    bool   `json:"replay,omitempty"`
+	OS        string `json:"os,omitempty"`
 	Signature string `json:"signature,omitempty"`
 }
 
@@ -44,6 +45,7 @@ func (m *Message) Sign() {
 	h.Write([]byte(m.Team))
 	h.Write([]byte(m.Text))
 	h.Write([]byte(m.Timestamp))
+	h.Write([]byte(m.OS))
 	m.Signature = hex.EncodeToString(h.Sum(nil))
 }
 
@@ -59,6 +61,7 @@ func (m *Message) Verify() bool {
 	h.Write([]byte(m.Team))
 	h.Write([]byte(m.Text))
 	h.Write([]byte(m.Timestamp))
+	h.Write([]byte(m.OS))
 	expected := hex.EncodeToString(h.Sum(nil))
 	return hmac.Equal([]byte(m.Signature), []byte(expected))
 }

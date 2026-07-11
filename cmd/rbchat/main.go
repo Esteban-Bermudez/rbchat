@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -55,9 +56,13 @@ func main() {
 	}
 
 	notificationsEnabled := true
+	iconsFlag := ""
 	for _, arg := range os.Args[1:] {
 		if arg == "--no-notify" {
 			notificationsEnabled = false
+		}
+		if strings.HasPrefix(arg, "--icons=") {
+			iconsFlag = strings.TrimPrefix(arg, "--icons=")
 		}
 	}
 
@@ -128,8 +133,26 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	networkID := network.ComputeNetworkID()
+	q := db.New(database)
 
-	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel, notificationsEnabled, otherInstanceRunning, networkID, version)
+	osIconMode := "nerd"
+	if v, err := q.GetConfig(ctx, "os_icons"); err == nil && v != "" {
+		osIconMode = v
+	}
+	if iconsFlag != "" {
+		switch iconsFlag {
+		case "nerd", "text", "emoji", "off":
+			osIconMode = iconsFlag
+		case "false":
+			osIconMode = "off"
+		default:
+			fmt.Fprintf(os.Stderr, "Error: invalid --icons value %q (valid: nerd, text, emoji, off)\n", iconsFlag)
+			os.Exit(1)
+		}
+		q.SetConfig(ctx, db.SetConfigParams{Key: "os_icons", Value: osIconMode})
+	}
+
+	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel, notificationsEnabled, otherInstanceRunning, networkID, version, osIconMode)
 
 	go listener.Listen(ctx, msgCh)
 
