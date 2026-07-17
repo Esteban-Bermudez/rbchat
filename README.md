@@ -45,6 +45,10 @@ On first launch you'll be prompted for a username and team. After that, you're i
 
 Pass `--no-notify` at startup to disable notifications entirely.
 
+### Mentions
+
+Type `@username` in a message to mention someone. When they receive it, a banner appears at the top of their terminal — `🔔 <you> mentioned you in a message` — for three seconds, then disappears. Matching is case-insensitive and requires a word boundary, so `@matt` won't fire for `@matthew`. Mentions work regardless of whether desktop notifications are enabled.
+
 ### Notifications on macOS
 
 rbchat uses macOS's native notification system via `osascript`. On first run your terminal app (Terminal / iTerm2) may need notification permission:

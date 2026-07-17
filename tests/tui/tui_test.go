@@ -202,6 +202,89 @@ func TestNewModelOnlyRendersMessagesSignedWithCurrentSecret(t *testing.T) {
 	}
 }
 
+func TestIncomingChatMentionFlashesBanner(t *testing.T) {
+	database := setupDB(t)
+	defer database.Close()
+	ctx := context.Background()
+
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, false, true, "", "dev", "off")
+	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
+
+	mention := network.Message{
+		Type:      "chat",
+		Username:  "alice",
+		Team:      "Redbrick",
+		Text:      "hey @me can you review this?",
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		MessageID: "mention-msg",
+	}
+	updated, _ = updated.Update(tui.IncomingNetworkMsg{Message: mention})
+
+	view := updated.View()
+	if !strings.Contains(view, "mentioned you in a message") {
+		t.Fatalf("expected mention banner in view, got: %q", view)
+	}
+	if !strings.Contains(view, "alice") {
+		t.Fatalf("expected mentioning username in banner, got: %q", view)
+	}
+}
+
+func TestChatWithoutMentionDoesNotFlash(t *testing.T) {
+	database := setupDB(t)
+	defer database.Close()
+	ctx := context.Background()
+
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, false, true, "", "dev", "off")
+	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
+
+	plain := network.Message{
+		Type:      "chat",
+		Username:  "alice",
+		Team:      "Redbrick",
+		Text:      "the @method needs review, thanks matthew@work",
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		MessageID: "plain-msg",
+	}
+	updated, _ = updated.Update(tui.IncomingNetworkMsg{Message: plain})
+
+	if strings.Contains(updated.View(), "mentioned you in a message") {
+		t.Fatalf("did not expect mention banner, got: %q", updated.View())
+	}
+}
+
+func TestMentionBannerClearsAfterDuration(t *testing.T) {
+	database := setupDB(t)
+	defer database.Close()
+	ctx := context.Background()
+
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, false, true, "", "dev", "off")
+	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
+
+	mention := network.Message{
+		Type:      "chat",
+		Username:  "alice",
+		Text:      "@me ping",
+		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		MessageID: "mention-msg",
+	}
+	updated, _ = updated.Update(tui.IncomingNetworkMsg{Message: mention})
+
+	const bannerText = "mentioned you in a message"
+	if !strings.Contains(updated.View(), bannerText) {
+		t.Fatal("expected banner to be visible immediately after the mention")
+	}
+
+	// After the display duration elapses, the timer (the first mention has
+	// generation 1) fires and the banner clears.
+	updated, _ = updated.Update(tui.MentionTickMsg{Gen: 1})
+	if strings.Contains(updated.View(), bannerText) {
+		t.Fatalf("expected banner to clear after its duration, got: %q", updated.View())
+	}
+}
+
 func setupDB(t *testing.T) *sql.DB {
 	t.Helper()
 	database, err := sql.Open("sqlite", ":memory:")

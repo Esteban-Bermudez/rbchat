@@ -21,6 +21,9 @@ const (
 	peerWindow    = 60 * time.Second
 	multicastAddr = "224.0.0.1:9999"
 	helpHeight    = 9
+
+	// mentionDuration is how long the @mention banner stays up before clearing.
+	mentionDuration = 3 * time.Second
 )
 
 func (m Model) Init() tea.Cmd {
@@ -141,11 +144,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case IncomingNetworkMsg:
-		m.handleIncoming(msg.Message)
+		cmds := []tea.Cmd{WaitForNetworkMsg(m.msgCh)}
+		if c := m.handleIncoming(msg.Message); c != nil {
+			cmds = append(cmds, c)
+		}
 		if msg.Message.Type == "sync" && msg.Message.Text == "sync_request" {
 			m.respondToSync()
 		}
-		return m, WaitForNetworkMsg(m.msgCh)
+		return m, tea.Batch(cmds...)
+
+	case MentionTickMsg:
+		if msg.Gen == m.mentionGen {
+			m.mentionBy = ""
+		}
+		return m, nil
 
 	case SyncTimeoutMsg:
 		m.syncing = false
@@ -216,9 +228,12 @@ func (m *Model) respondToSync() {
 	}
 }
 
-func (m *Model) handleIncoming(msg network.Message) {
+// handleIncoming processes an inbound network message and returns a tea.Cmd to
+// run (or nil). A non-nil command is only returned when an incoming chat
+// message @mentions this user, kicking off the flashing mention banner.
+func (m *Model) handleIncoming(msg network.Message) tea.Cmd {
 	if m.networkID != "" && msg.NetworkID != "" && msg.NetworkID != m.networkID {
-		return
+		return nil
 	}
 
 	if msg.Type == "sync" {
@@ -226,7 +241,7 @@ func (m *Model) handleIncoming(msg network.Message) {
 			msg.Type = "join"
 		} else {
 			m.dbInsertMessage(msg)
-			return
+			return nil
 		}
 	}
 
@@ -240,7 +255,7 @@ func (m *Model) handleIncoming(msg network.Message) {
 				m.peerCount = m.countActivePeers()
 			}
 		}
-		return
+		return nil
 	}
 
 	if msg.Type == "chat" {
@@ -254,13 +269,69 @@ func (m *Model) handleIncoming(msg network.Message) {
 			if !msg.Replay {
 				m.lastSeen[msg.Username] = time.Now()
 				m.peerCount = m.countActivePeers()
-				if m.notificationsEnabled && msg.Username != m.username {
-					notify(msg.Username, msg.Team, msg.Text)
+				if msg.Username != m.username {
+					if m.notificationsEnabled {
+						notify(msg.Username, msg.Team, msg.Text)
+					}
+					if mentionsUser(msg.Text, m.username) {
+						return m.startMention(msg.Username)
+					}
 				}
 			}
 		}
-		return
+		return nil
 	}
+	return nil
+}
+
+// startMention begins the flashing banner announcing that `by` mentioned this
+// user, and returns the command that schedules the first flash toggle.
+// startMention shows the banner announcing that `by` mentioned this user and
+// returns a command that clears it after mentionDuration. mentionGen tags the
+// timer so a newer mention supersedes an older one still counting down.
+func (m *Model) startMention(by string) tea.Cmd {
+	m.mentionGen++
+	m.mentionBy = by
+	gen := m.mentionGen
+	return tea.Tick(mentionDuration, func(t time.Time) tea.Msg {
+		return MentionTickMsg{Gen: gen}
+	})
+}
+
+// mentionsUser reports whether text contains an "@username" mention of the
+// given username. Matching is case-insensitive and requires word boundaries
+// around the mention so "@matt" matches but "@matthew" or "email@matt" do not.
+func mentionsUser(text, username string) bool {
+	if username == "" {
+		return false
+	}
+	lowerText := strings.ToLower(text)
+	target := "@" + strings.ToLower(username)
+	from := 0
+	for {
+		rel := strings.Index(lowerText[from:], target)
+		if rel < 0 {
+			return false
+		}
+		idx := from + rel
+		if idx > 0 && isUsernameChar(lowerText[idx-1]) {
+			from = idx + 1
+			continue
+		}
+		end := idx + len(target)
+		if end < len(lowerText) && isUsernameChar(lowerText[end]) {
+			from = idx + 1
+			continue
+		}
+		return true
+	}
+}
+
+func isUsernameChar(c byte) bool {
+	return c == '_' ||
+		(c >= 'a' && c <= 'z') ||
+		(c >= 'A' && c <= 'Z') ||
+		(c >= '0' && c <= '9')
 }
 
 func (m *Model) appendMessage(msg network.Message) {

@@ -6,6 +6,13 @@ A person using rbchat. Identified by a **Username** and a **Team**. Persisted lo
 ## Desktop notifications
 Sent via `beeep.Notify` for incoming chat messages from other users. Toggle at runtime with Ctrl+N (updates `Model.notificationsEnabled`). Disable entirely at startup with `--no-notify` flag (skips `Model.notificationsEnabled` initialization). Indicator shown in the title bar: 🔔 (green) when enabled, 🔕 (red) when disabled.
 
+## @mentions
+A User is mentioned by including `@<their-username>` in a chat message. On receipt of a non-replay `chat` message from another user whose text mentions the local username, a banner appears on the top line of the terminal reading `🔔 <sender> mentioned you in a message`.
+
+The banner stays up for `mentionDuration` (3s, constant in `update.go`), then clears. It's driven by a single `MentionTickMsg` scheduled via `tea.Tick`; when that fires the banner is cleared. `Model.mentionGen` tags each mention so a stale timer from a superseded mention (a newer @mention arriving while one is still showing) is ignored rather than clearing the newer banner early.
+
+Matching (`mentionsUser`) is case-insensitive and word-boundary aware: `@matt` matches, but `@matthew` and `email@matt` do not (the character before `@` and after the username must not be `[A-Za-z0-9_]`). Mentions in the User's own messages and in replayed history are never flashed. The banner is independent of the desktop-notification toggle (Ctrl+N).
+
 ## Title bar
 Three concatenated lipgloss-styled segments, each independently setting the purple background (#7C3AED), to prevent ANSI-reset gaps from the bell emoji breaking the background color for the peer count.
 
