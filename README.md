@@ -2,6 +2,9 @@
 
 Zero-configuration LAN chat over UDP multicast. No server, no sign-up, no internet — just a terminal and a local network.
 
+<img width="2964" height="606" alt="image" src="https://github.com/user-attachments/assets/96922b7b-daf9-4ab3-bf11-7a646bbe70d3" />
+
+
 ## Install
 
 ### One-liner (macOS, Linux)
