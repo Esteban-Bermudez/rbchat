@@ -103,7 +103,7 @@ The UI is managed by Bubble Tea's state machine, rendering distinct styled regio
 ```
 
 Key layout details:
-- Title bar includes address, notification bell indicator (green=on, red=off), and active peer count
+- Title bar includes address, notification bell indicator (green=on, red=off), active peer count, `? for help` hint, and version
 - All styled with lipgloss; title uses purple background (#7C3AED) spanning the full line width
 - The bell emoji is a separate styled segment to avoid ANSI-reset gaps
 - Help text below input shows available shortcuts

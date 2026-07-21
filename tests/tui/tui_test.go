@@ -21,6 +21,20 @@ func TestTeamsNonEmpty(t *testing.T) {
 	}
 }
 
+func TestTitleShowsHelpHint(t *testing.T) {
+	database := setupDB(t)
+	defer database.Close()
+	ctx := context.Background()
+
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "", "1.2.2", "nerd")
+	updated, _ := model.Update(tea.WindowSizeMsg{Width: 120, Height: 24})
+	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
+
+	if view := updated.View(); !strings.Contains(view, "? for help") {
+		t.Fatalf("expected title to show help hint, view: %q", view)
+	}
+}
+
 func TestRenderMessageChat(t *testing.T) {
 	msg := network.Message{
 		Type:      "chat",

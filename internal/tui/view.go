@@ -154,6 +154,7 @@ func (m Model) View() string {
 	title := titleStyle.Render(fmt.Sprintf(" rbchat | %s | ", multicastAddr)) +
 		bell +
 		titleStyle.Render(fmt.Sprintf(" | %d peers ", m.peerCount)) +
+		titleStyle.Render(" | ? for help ") +
 		titleStyle.Render(fmt.Sprintf(" | %s ", versionStr))
 	title += "\n"
 
