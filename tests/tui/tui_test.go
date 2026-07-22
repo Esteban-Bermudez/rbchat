@@ -254,7 +254,7 @@ func TestChatWithoutMentionDoesNotFlash(t *testing.T) {
 	}
 }
 
-func TestMentionBannerClearsAfterDuration(t *testing.T) {
+func TestMentionBannerClearsOnEsc(t *testing.T) {
 	database := setupDB(t)
 	defer database.Close()
 	ctx := context.Background()
@@ -277,11 +277,10 @@ func TestMentionBannerClearsAfterDuration(t *testing.T) {
 		t.Fatal("expected banner to be visible immediately after the mention")
 	}
 
-	// After the display duration elapses, the timer (the first mention has
-	// generation 1) fires and the banner clears.
-	updated, _ = updated.Update(tui.MentionTickMsg{Gen: 1})
+	// Pressing esc dismisses the banner.
+	updated, _ = updated.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	if strings.Contains(updated.View(), bannerText) {
-		t.Fatalf("expected banner to clear after its duration, got: %q", updated.View())
+		t.Fatalf("expected banner to clear after esc, got: %q", updated.View())
 	}
 }
 

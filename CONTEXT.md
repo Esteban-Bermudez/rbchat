@@ -9,7 +9,7 @@ Sent via `beeep.Notify` for incoming chat messages from other users. Toggle at r
 ## @mentions
 A User is mentioned by including `@<their-username>` in a chat message. On receipt of a non-replay `chat` message from another user whose text mentions the local username, a banner appears on the top line of the terminal reading `🔔 <sender> mentioned you in a message`.
 
-The banner stays up for `mentionDuration` (3s, constant in `update.go`), then clears. It's driven by a single `MentionTickMsg` scheduled via `tea.Tick`; when that fires the banner is cleared. `Model.mentionGen` tags each mention so a stale timer from a superseded mention (a newer @mention arriving while one is still showing) is ignored rather than clearing the newer banner early.
+The banner (`Model.mentionBy`) stays up until the User acts: it clears when they send a message or press Esc. A later @mention simply replaces the current one.
 
 Matching (`mentionsUser`) is case-insensitive and word-boundary aware: `@matt` matches, but `@matthew` and `email@matt` do not (the character before `@` and after the username must not be `[A-Za-z0-9_]`). Mentions in the User's own messages and in replayed history are never flashed. The banner is independent of the desktop-notification toggle (Ctrl+N).
 

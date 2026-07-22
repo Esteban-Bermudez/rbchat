@@ -38,13 +38,6 @@ type SendFailedMsg struct {
 	Err error
 }
 
-// MentionTickMsg fires when an @mention banner's display time has elapsed and
-// it should be cleared. Gen identifies the mention that scheduled it so a stale
-// timer from a superseded mention doesn't clear a newer banner early.
-type MentionTickMsg struct {
-	Gen int
-}
-
 func WaitForNetworkMsg(ch <-chan network.IncomingMessage) tea.Cmd {
 	return func() tea.Msg {
 		incoming, ok := <-ch
@@ -81,7 +74,6 @@ type Model struct {
 	version              string
 	osIconMode           string
 	mentionBy            string
-	mentionGen           int
 }
 
 func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID, version string, osIconMode string) Model {

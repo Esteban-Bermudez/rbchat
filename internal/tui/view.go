@@ -290,6 +290,7 @@ func helpPanel(width int) string {
 		{"ctrl+d", "Scroll down (half page)"},
 		{"pgup", "Page up"},
 		{"pgdown", "Page down"},
+		{"esc", "Dismiss @mention banner"},
 		{"ctrl+c", "Quit"},
 		{"?", "Close this help"},
 	}
