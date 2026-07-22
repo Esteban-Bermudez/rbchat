@@ -42,8 +42,13 @@ On first launch you'll be prompted for a username and team. After that, you're i
 | Enter | Send message |
 | Ctrl+C | Quit |
 | Ctrl+N | Toggle desktop notifications on/off |
+| Esc | Dismiss @mention banner |
 
 Pass `--no-notify` at startup to disable notifications entirely.
+
+### Mentions
+
+Type `@username` in a message to mention someone. When they receive it, a banner appears at the top of their terminal — `🔔 <you> mentioned you in a message` — and stays until they send a message or press Esc. Matching is case-insensitive and requires a word boundary, so `@matt` won't fire for `@matthew`. Mentions work regardless of whether desktop notifications are enabled.
 
 ### Notifications on macOS
 

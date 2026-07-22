@@ -85,6 +85,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "pgdown":
 			m.viewport.PageDown()
 			return m, nil
+		case "esc":
+			m.mentionBy = ""
+			return m, nil
 		case "?":
 			if m.showHelp || m.input.Value() == "" {
 				m.showHelp = !m.showHelp
@@ -106,6 +109,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			m.input.SetValue("")
+			m.mentionBy = ""
 
 			chatMsg := network.Message{
 				Type:      "chat",
@@ -216,6 +220,8 @@ func (m *Model) respondToSync() {
 	}
 }
 
+// handleIncoming processes an inbound network message, updating the message
+// list, peer state, and mention banner as appropriate.
 func (m *Model) handleIncoming(msg network.Message) {
 	if m.networkID != "" && msg.NetworkID != "" && msg.NetworkID != m.networkID {
 		return
@@ -254,13 +260,35 @@ func (m *Model) handleIncoming(msg network.Message) {
 			if !msg.Replay {
 				m.lastSeen[msg.Username] = time.Now()
 				m.peerCount = m.countActivePeers()
-				if m.notificationsEnabled && msg.Username != m.username {
-					notify(msg.Username, msg.Team, msg.Text)
+				if msg.Username != m.username {
+					if m.notificationsEnabled {
+						notify(msg.Username, msg.Team, msg.Text)
+					}
+					if mentionsUser(msg.Text, m.username) {
+						m.mentionBy = msg.Username
+					}
 				}
 			}
 		}
 		return
 	}
+}
+
+// mentionsUser reports whether text mentions username via an "@username" token
+// (case-insensitive). Each whitespace-separated word is compared to "@username"
+// after trimming surrounding punctuation, so "@matt" matches but "@matthew" and
+// "email@matt" do not.
+func mentionsUser(text, username string) bool {
+	if username == "" {
+		return false
+	}
+	target := "@" + username
+	for _, field := range strings.Fields(text) {
+		if strings.EqualFold(strings.Trim(field, "()[]{}.,!?;:\"'"), target) {
+			return true
+		}
+	}
+	return false
 }
 
 func (m *Model) appendMessage(msg network.Message) {

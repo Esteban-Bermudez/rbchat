@@ -48,6 +48,11 @@ var (
 
 	dividerStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#6B7280"))
+
+	mentionStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#FFF")).
+			Background(lipgloss.Color("#EF4444"))
 )
 
 var (
@@ -172,7 +177,25 @@ func (m Model) View() string {
 		inputField += "\n" + helpPanel(m.viewport.Width)
 	}
 
-	return title + chatContent + "\n" + inputField
+	out := title + chatContent + "\n" + inputField
+	if banner := m.mentionBanner(); banner != "" {
+		out = banner + "\n" + out
+	}
+	return out
+}
+
+// mentionBanner renders the "@ mentioned you" line shown at the top of the
+// screen while a mention is active, or "" when none is.
+func (m Model) mentionBanner() string {
+	if m.mentionBy == "" {
+		return ""
+	}
+	text := fmt.Sprintf(" 🔔 %s mentioned you in a message ", m.mentionBy)
+	style := mentionStyle
+	if m.viewport.Width > 0 {
+		style = style.Width(m.viewport.Width)
+	}
+	return style.Render(text)
 }
 
 func RenderMessage(msg network.Message) string {
@@ -267,6 +290,7 @@ func helpPanel(width int) string {
 		{"ctrl+d", "Scroll down (half page)"},
 		{"pgup", "Page up"},
 		{"pgdown", "Page down"},
+		{"esc", "Dismiss @mention banner"},
 		{"ctrl+c", "Quit"},
 		{"?", "Close this help"},
 	}

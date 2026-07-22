@@ -73,6 +73,7 @@ type Model struct {
 	networkID            string
 	version              string
 	osIconMode           string
+	mentionBy            string
 }
 
 func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID, version string, osIconMode string) Model {
