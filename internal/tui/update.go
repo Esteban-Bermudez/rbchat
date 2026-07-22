@@ -274,40 +274,21 @@ func (m *Model) handleIncoming(msg network.Message) {
 	}
 }
 
-// mentionsUser reports whether text contains an "@username" mention of the
-// given username. Matching is case-insensitive and requires word boundaries
-// around the mention so "@matt" matches but "@matthew" or "email@matt" do not.
+// mentionsUser reports whether text mentions username via an "@username" token
+// (case-insensitive). Each whitespace-separated word is compared to "@username"
+// after trimming surrounding punctuation, so "@matt" matches but "@matthew" and
+// "email@matt" do not.
 func mentionsUser(text, username string) bool {
 	if username == "" {
 		return false
 	}
-	lowerText := strings.ToLower(text)
-	target := "@" + strings.ToLower(username)
-	from := 0
-	for {
-		rel := strings.Index(lowerText[from:], target)
-		if rel < 0 {
-			return false
+	target := "@" + username
+	for _, field := range strings.Fields(text) {
+		if strings.EqualFold(strings.Trim(field, "()[]{}.,!?;:\"'"), target) {
+			return true
 		}
-		idx := from + rel
-		if idx > 0 && isUsernameChar(lowerText[idx-1]) {
-			from = idx + 1
-			continue
-		}
-		end := idx + len(target)
-		if end < len(lowerText) && isUsernameChar(lowerText[end]) {
-			from = idx + 1
-			continue
-		}
-		return true
 	}
-}
-
-func isUsernameChar(c byte) bool {
-	return c == '_' ||
-		(c >= 'a' && c <= 'z') ||
-		(c >= 'A' && c <= 'Z') ||
-		(c >= '0' && c <= '9')
+	return false
 }
 
 func (m *Model) appendMessage(msg network.Message) {

@@ -11,7 +11,7 @@ A User is mentioned by including `@<their-username>` in a chat message. On recei
 
 The banner (`Model.mentionBy`) stays up until the User acts: it clears when they send a message or press Esc. A later @mention simply replaces the current one.
 
-Matching (`mentionsUser`) is case-insensitive and word-boundary aware: `@matt` matches, but `@matthew` and `email@matt` do not (the character before `@` and after the username must not be `[A-Za-z0-9_]`). Mentions in the User's own messages and in replayed history are never flashed. The banner is independent of the desktop-notification toggle (Ctrl+N).
+Matching (`mentionsUser`) is case-insensitive: each whitespace-separated word is compared to `@<username>` after trimming surrounding punctuation, so `@matt` matches, but `@matthew` and `email@matt` do not. Mentions in the User's own messages and in replayed history are never flashed. The banner is independent of the desktop-notification toggle (Ctrl+N).
 
 ## Title bar
 Three concatenated lipgloss-styled segments, each independently setting the purple background (#7C3AED), to prevent ANSI-reset gaps from the bell emoji breaking the background color for the peer count.
