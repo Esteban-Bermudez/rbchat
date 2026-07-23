@@ -1,11 +1,10 @@
 package tui
 
-import "github.com/gen2brain/beeep"
-
+// notify shows a desktop notification for an incoming chat message.
 func notify(username, team, text string) {
 	title := username
 	if team != "" {
 		title += " (" + team + ")"
 	}
-	beeep.Notify("rbchat - "+title, text, "")
+	sendNotification("rbchat - "+title, text)
 }
