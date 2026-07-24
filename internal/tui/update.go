@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -275,20 +276,15 @@ func (m *Model) handleIncoming(msg network.Message) {
 }
 
 // mentionsUser reports whether text mentions username via an "@username" token
-// (case-insensitive). Each whitespace-separated word is compared to "@username"
-// after trimming surrounding punctuation, so "@matt" matches but "@matthew" and
-// "email@matt" do not.
+// (case-insensitive). Uses \B (non-word-boundary) before @ so "email@user"
+// doesn't match (the @ is between word and non-word chars), and \b after
+// username so "@user" doesn't match inside "@username".
 func mentionsUser(text, username string) bool {
 	if username == "" {
 		return false
 	}
-	target := "@" + username
-	for _, field := range strings.Fields(text) {
-		if strings.EqualFold(strings.Trim(field, "()[]{}.,!?;:\"'"), target) {
-			return true
-		}
-	}
-	return false
+	re := regexp.MustCompile(`(?i)\B@` + regexp.QuoteMeta(username) + `\b`)
+	return re.MatchString(text)
 }
 
 func (m *Model) appendMessage(msg network.Message) {
