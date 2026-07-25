@@ -145,9 +145,12 @@ func (m Model) View() string {
 	}
 
 	var bell string
-	if m.notificationsEnabled {
+	switch m.notificationMode {
+	case NotifyAll:
 		bell = bellOnStyle.Render("🔔")
-	} else {
+	case NotifyMentions:
+		bell = bellOnStyle.Render("🔔@")
+	default:
 		bell = bellOffStyle.Render("🔕")
 	}
 	var versionStr string
@@ -284,7 +287,7 @@ func helpPanel(width int) string {
 	header = line[:1] + header + line[1+lipgloss.Width(header):]
 
 	items := []struct{ key, desc string }{
-		{"ctrl+n", "Toggle notifications"},
+		{"ctrl+n", "Cycle notifications (all/@mentions/off)"},
 		{"enter", "Send message"},
 		{"ctrl+u", "Scroll up (half page)"},
 		{"ctrl+d", "Scroll down (half page)"},

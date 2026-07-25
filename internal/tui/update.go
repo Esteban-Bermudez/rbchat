@@ -72,7 +72,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = fmt.Errorf("Shutting down...")
 			return m, tea.Quit
 		case "ctrl+n":
-			m.notificationsEnabled = !m.notificationsEnabled
+			m.notificationMode = m.notificationMode.Next()
 			return m, nil
 		case "ctrl+u":
 			m.viewport.HalfViewUp()
@@ -262,10 +262,16 @@ func (m *Model) handleIncoming(msg network.Message) {
 				m.lastSeen[msg.Username] = time.Now()
 				m.peerCount = m.countActivePeers()
 				if msg.Username != m.username {
-					if m.notificationsEnabled {
+					isMention := mentionsUser(msg.Text, m.username)
+					switch m.notificationMode {
+					case NotifyAll:
 						notify(msg.Username, msg.Team, msg.Text)
+					case NotifyMentions:
+						if isMention {
+							notify(msg.Username, msg.Team, msg.Text)
+						}
 					}
-					if mentionsUser(msg.Text, m.username) {
+					if isMention {
 						m.mentionBy = msg.Username
 					}
 				}

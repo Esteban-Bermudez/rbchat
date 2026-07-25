@@ -28,6 +28,29 @@ var teams = []string{
 	"Redbrick",
 }
 
+// NotificationMode controls which incoming chat messages trigger a desktop
+// notification. Cycling (via ctrl+n) moves NotifyAll -> NotifyMentions ->
+// NotifyNone -> NotifyAll ...
+type NotificationMode int
+
+const (
+	NotifyAll NotificationMode = iota
+	NotifyMentions
+	NotifyNone
+)
+
+// Next returns the next mode in the cycle.
+func (n NotificationMode) Next() NotificationMode {
+	switch n {
+	case NotifyAll:
+		return NotifyMentions
+	case NotifyMentions:
+		return NotifyNone
+	default:
+		return NotifyAll
+	}
+}
+
 type IncomingNetworkMsg struct {
 	Message network.Message
 }
@@ -67,7 +90,7 @@ type Model struct {
 	lastSeen             map[string]time.Time
 	seenIDs              map[string]struct{}
 	ready                bool
-	notificationsEnabled bool
+	notificationMode     NotificationMode
 	otherInstanceRunning bool
 	showHelp             bool
 	networkID            string
@@ -77,6 +100,10 @@ type Model struct {
 }
 
 func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID, version string, osIconMode string) Model {
+	notificationMode := NotifyAll
+	if !notificationsEnabled {
+		notificationMode = NotifyNone
+	}
 	ti := textinput.New()
 	ti.Placeholder = "Type a message..."
 	ti.Focus()
@@ -139,7 +166,7 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 		input:                ti,
 		syncing:              true,
 		lastSeen:             make(map[string]time.Time),
-		notificationsEnabled: notificationsEnabled,
+		notificationMode:     notificationMode,
 		otherInstanceRunning: otherInstanceRunning,
 		networkID:            networkID,
 		version:              version,
