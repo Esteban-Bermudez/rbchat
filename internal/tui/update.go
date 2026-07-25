@@ -281,16 +281,19 @@ func (m *Model) handleIncoming(msg network.Message) {
 	}
 }
 
-// mentionsUser reports whether text mentions username via an "@username" token
-// (case-insensitive). Uses \B (non-word-boundary) before @ so "email@user"
-// doesn't match (the @ is between word and non-word chars), and \b after
-// username so "@user" doesn't match inside "@username".
+// mentionRegex builds a case-insensitive regex that matches @username tokens.
+// Uses \B (non-word-boundary) before @ so "email@user" doesn't match, and
+// \b after username so "@u" doesn't match inside "@username".
+func mentionRegex(username string) *regexp.Regexp {
+	return regexp.MustCompile(`(?i)\B@` + regexp.QuoteMeta(username) + `\b`)
+}
+
+// mentionsUser reports whether text mentions username via an "@username" token.
 func mentionsUser(text, username string) bool {
 	if username == "" {
 		return false
 	}
-	re := regexp.MustCompile(`(?i)\B@` + regexp.QuoteMeta(username) + `\b`)
-	return re.MatchString(text)
+	return mentionRegex(username).MatchString(text)
 }
 
 func (m *Model) appendMessage(msg network.Message) {
@@ -331,7 +334,7 @@ func (m *Model) refreshViewport() {
 	var content string
 	var lastDate string
 	for _, msg := range m.messages {
-		rendered := renderMessage(msg, m.viewport.Width, m.osIconMode)
+		rendered := renderMessage(msg, m.viewport.Width, m.osIconMode, m.username)
 		if rendered == "" {
 			continue
 		}

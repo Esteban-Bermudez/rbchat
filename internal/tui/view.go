@@ -201,11 +201,35 @@ func (m Model) mentionBanner() string {
 	return style.Render(text)
 }
 
-func RenderMessage(msg network.Message) string {
-	return renderMessage(msg, 0, "")
+// highlightMentions wraps occurrences of @username in mentionStyle.
+func highlightMentions(text, username string) string {
+	if username == "" {
+		return msgStyle.Render(text)
+	}
+	re := mentionRegex(username)
+	var result strings.Builder
+	lastEnd := 0
+	for _, m := range re.FindAllStringIndex(text, -1) {
+		if m[0] > lastEnd {
+			result.WriteString(msgStyle.Render(text[lastEnd:m[0]]))
+		}
+		result.WriteString(mentionStyle.Render(text[m[0]:m[1]]))
+		lastEnd = m[1]
+	}
+	if lastEnd < len(text) {
+		result.WriteString(msgStyle.Render(text[lastEnd:]))
+	}
+	if result.Len() == 0 {
+		return msgStyle.Render(text)
+	}
+	return result.String()
 }
 
-func renderMessage(msg network.Message, width int, osIconMode string) string {
+func RenderMessage(msg network.Message) string {
+	return renderMessage(msg, 0, "", "")
+}
+
+func renderMessage(msg network.Message, width int, osIconMode string, highlightUsername string) string {
 	switch msg.Type {
 	case "join":
 		t := parseTimestamp(msg.Timestamp)
@@ -238,7 +262,7 @@ func renderMessage(msg network.Message, width int, osIconMode string) string {
 			teamPart = teamStyle(msg.Team).Render(" (" + msg.Team + ")")
 		}
 		header := fmt.Sprintf("%s%s:", user, teamPart)
-		left := fmt.Sprintf("%s %s", header, msgStyle.Render(msg.Text))
+		left := fmt.Sprintf("%s %s", header, highlightMentions(msg.Text, highlightUsername))
 		right := rightSide(msg.OS, osIconMode, ts)
 		if width > 0 {
 			leftWidth := lipgloss.Width(left)
