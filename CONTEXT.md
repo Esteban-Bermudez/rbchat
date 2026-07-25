@@ -44,6 +44,7 @@ Unified JSON structure for all wire traffic. The `type` field discriminates:
 | `chat` | A user-to-user chat message. Displayed in the viewport. |
 | `sync` | Sync request. Sent on startup to request history; peers respond by broadcasting their recent chat messages. Never displayed in the viewport and never appended to m.messages — stored in DB only. |
 | `join` | Self-announcement after setup completes. Displayed as a system message. |
+| `heartbeat` | Periodic presence signal (every 30s). Never stored in DB, never displayed. Only updates `lastSeen` and recalculates `peerCount`. |
 
 Fields: `type` (discriminator), `username`, `team`, `text`, `timestamp` (ISO 8601), `message_id` (UUID v4), `replay` (bool, omitempty), `signature` (string, omitempty — HMAC-SHA256 hex digest).
 
@@ -116,7 +117,22 @@ If a send fails, a red `[Error] Failed to send message` line is rendered briefly
 Ctrl+C in the Bubble Tea view → display "Shutting down..." → cancel the listener goroutine's context → close UDP connections → close DB → `tea.Quit`.
 
 ## Peer tracking
-"Peers online" count is the number of unique message senders seen within the last 60 seconds. Only `chat` and `join` messages update the timer — `sync` messages (history replays) are excluded to prevent stale peers from appearing online.
+
+"Peers online" count is the number of unique message senders seen within the last 60 seconds. Every `chat`, `join`, and `heartbeat` message refreshes the sender's 60-second timer — `sync` messages (history replays) are excluded to prevent stale peers from appearing online.
+
+### Heartbeat protocol
+
+Each client broadcasts a `heartbeat`-type message every 30 seconds (`heartbeatInterval`). The heartbeat has no special content beyond the standard message fields — `Text` is set to `"heartbeat"` to satisfy the broadcaster's non-empty check. On receipt, the listener:
+
+1. Rejects heartbeats during sync (would inflate count while replaying)
+2. Stores the sender's username and team in `Model.lastSeen` alongside the current timestamp
+3. Recalculates `m.peerCount` via `countActivePeers()`
+
+Heartbeats are never persisted to the database and never appended to `m.messages`. They exist solely to keep the timestamp fresh for the 60-second sliding window. A user who closes the app stops heartbeating and falls off the list within 30–60 seconds.
+
+### Online users list
+
+Pressing `ctrl+t` toggles `Model.showUserList`. When active, `View()` replaces the viewport content with an alphabetically sorted list of active peers (username + team) via `SetContent`. New messages continue to accumulate in `m.messages` while the list is shown but don't overwrite the viewport. Pressing `ctrl+t` again restores the chat view via `refreshViewport()`.
 
 ## Network scoping (network_id)
 Messages are scoped to the physical LAN to prevent cross-contamination between different networks (e.g. office vs home). Each message is tagged with a `network_id` derived from the **default gateway's MAC address**, which is unique per physical router.

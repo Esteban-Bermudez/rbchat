@@ -81,6 +81,7 @@ Message types:
 | `chat` | bidirectional | A user-to-user chat message. Displayed in the viewport. |
 | `sync` | inbound (history replay) | Sent on startup to request history; peers respond by broadcasting their last 50 messages. Never displayed in the viewport on the receiving end. Absorbed silently into DB. |
 | `join` | broadcast | Self-announcement after setup completes. Displayed as a system message in the viewport. |
+| `heartbeat` | broadcast | Periodic presence signal (every 30s). Never stored in DB, never displayed. Only updates lastSeen and recalculates peerCount. |
 
 ## User Interface Design (Bubble Tea `View`)
 

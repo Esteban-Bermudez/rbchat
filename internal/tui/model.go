@@ -57,6 +57,9 @@ type IncomingNetworkMsg struct {
 
 type SyncTimeoutMsg struct{}
 
+// HeartbeatTickMsg is sent periodically to broadcast a presence announcement.
+type HeartbeatTickMsg struct{}
+
 type SendFailedMsg struct {
 	Err error
 }
@@ -69,6 +72,11 @@ func WaitForNetworkMsg(ch <-chan network.IncomingMessage) tea.Cmd {
 		}
 		return IncomingNetworkMsg{Message: incoming.Message}
 	}
+}
+
+type peerInfo struct {
+	lastSeen time.Time
+	team     string
 }
 
 type Model struct {
@@ -87,12 +95,13 @@ type Model struct {
 	cancel               context.CancelFunc
 	err                  error
 	quitting             bool
-	lastSeen             map[string]time.Time
+	lastSeen             map[string]peerInfo
 	seenIDs              map[string]struct{}
 	ready                bool
 	notificationMode     NotificationMode
 	otherInstanceRunning bool
 	showHelp             bool
+	showUserList         bool
 	networkID            string
 	version              string
 	osIconMode           string
@@ -165,7 +174,7 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 		seenIDs:              seenIDs,
 		input:                ti,
 		syncing:              true,
-		lastSeen:             make(map[string]time.Time),
+		lastSeen:             make(map[string]peerInfo),
 		notificationMode:     notificationMode,
 		otherInstanceRunning: otherInstanceRunning,
 		networkID:            networkID,

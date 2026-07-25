@@ -17,11 +17,12 @@ import (
 )
 
 const (
-	maxMessages   = 10000
-	syncTimeout   = 2 * time.Second
-	peerWindow    = 60 * time.Second
-	multicastAddr = "224.0.0.1:9999"
-	helpHeight    = 9
+	maxMessages       = 10000
+	syncTimeout       = 2 * time.Second
+	peerWindow        = 60 * time.Second
+	heartbeatInterval = 30 * time.Second
+	multicastAddr     = "224.0.0.1:9999"
+	helpHeight        = 9
 )
 
 func (m Model) Init() tea.Cmd {
@@ -91,6 +92,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "?":
 			if m.showHelp || m.input.Value() == "" {
+				// Close user list if open to avoid stacking footer panels.
+				if m.showUserList {
+					m.showUserList = false
+					if m.ready {
+						m.viewport.Height += helpHeight
+					}
+				}
 				m.showHelp = !m.showHelp
 				if m.ready {
 					if m.showHelp {
@@ -101,6 +109,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			}
+		case "ctrl+t":
+			if m.syncing {
+				return m, nil
+			}
+			m.showUserList = !m.showUserList
+			if m.showUserList {
+				m.viewport.SetContent(buildUserListContent(m.viewport.Width, m.lastSeen, m.osIconMode))
+				m.viewport.GotoTop()
+			} else {
+				m.refreshViewport()
+			}
+			return m, nil
 		case "enter":
 			if m.syncing {
 				return m, nil
@@ -171,7 +191,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				OS:        runtime.GOOS,
 			})
 		}
-		return m, WaitForNetworkMsg(m.msgCh)
+		return m, tea.Batch(
+			WaitForNetworkMsg(m.msgCh),
+			tea.Tick(heartbeatInterval, func(t time.Time) tea.Msg {
+				return HeartbeatTickMsg{}
+			}),
+		)
+
+	case HeartbeatTickMsg:
+		m.broadcaster.Send(network.Message{
+			Type:      "heartbeat",
+			Username:  m.username,
+			Team:      m.team,
+			Text:      "heartbeat",
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+			MessageID: uuid.New().String(),
+			NetworkID: m.networkID,
+			OS:        runtime.GOOS,
+		})
+		return m, tea.Batch(
+			WaitForNetworkMsg(m.msgCh),
+			tea.Tick(heartbeatInterval, func(t time.Time) tea.Msg {
+				return HeartbeatTickMsg{}
+			}),
+		)
 
 	case SendFailedMsg:
 		m.err = fmt.Errorf("Failed to send message: %v", msg.Err)
@@ -228,6 +271,20 @@ func (m *Model) handleIncoming(msg network.Message) {
 		return
 	}
 
+	// Heartbeat messages are ephemeral presence signals — never stored or
+	// displayed. Just update the lastSeen timestamp and recalculate the peer
+	// count.
+	if msg.Type == "heartbeat" {
+		if !m.syncing {
+			m.lastSeen[msg.Username] = peerInfo{
+				lastSeen: time.Now(),
+				team:     msg.Team,
+			}
+			m.peerCount = m.countActivePeers()
+		}
+		return
+	}
+
 	if msg.Type == "sync" {
 		if msg.Text == "joined the network" {
 			msg.Type = "join"
@@ -243,7 +300,10 @@ func (m *Model) handleIncoming(msg network.Message) {
 		if !m.syncing {
 			m.refreshViewport()
 			if !msg.Replay {
-				m.lastSeen[msg.Username] = time.Now()
+				m.lastSeen[msg.Username] = peerInfo{
+					lastSeen: time.Now(),
+					team:     msg.Team,
+				}
 				m.peerCount = m.countActivePeers()
 			}
 		}
@@ -259,7 +319,10 @@ func (m *Model) handleIncoming(msg network.Message) {
 			})
 			m.refreshViewport()
 			if !msg.Replay {
-				m.lastSeen[msg.Username] = time.Now()
+				m.lastSeen[msg.Username] = peerInfo{
+					lastSeen: time.Now(),
+					team:     msg.Team,
+				}
 				m.peerCount = m.countActivePeers()
 				if msg.Username != m.username {
 					isMention := mentionsUser(msg.Text, m.username)
@@ -331,6 +394,9 @@ func (m *Model) dbInsertMessage(msg network.Message) {
 }
 
 func (m *Model) refreshViewport() {
+	if m.showUserList {
+		return
+	}
 	var content string
 	var lastDate string
 	for _, msg := range m.messages {
@@ -366,8 +432,8 @@ func (m *Model) refreshViewport() {
 func (m *Model) countActivePeers() int {
 	now := time.Now()
 	count := 0
-	for _, t := range m.lastSeen {
-		if now.Sub(t) < peerWindow {
+	for _, info := range m.lastSeen {
+		if now.Sub(info.lastSeen) < peerWindow {
 			count++
 		}
 	}

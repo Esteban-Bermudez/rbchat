@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -169,7 +170,7 @@ func (m Model) View() string {
 	separator := strings.Repeat("─", m.viewport.Width)
 	title += separator + "\n"
 
-	chatContent := m.viewport.View()
+	var chatContent string = m.viewport.View()
 
 	var inputField string
 	if m.err != nil {
@@ -303,15 +304,22 @@ func helpPanel(width int) string {
 	if width <= 0 {
 		width = 60
 	}
-	header := lipgloss.NewStyle().
+	// Build header as "─ Keybindings ──────" without byte-splicing
+	// styled strings (which breaks ANSI escape codes).
+	headerText := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("#FBBF24")).
 		Render(" Keybindings ")
-	line := dividerStyle.Render(strings.Repeat("─", width-lipgloss.Width(header)))
-	header = line[:1] + header + line[1+lipgloss.Width(header):]
+	headerWidth := lipgloss.Width(headerText)
+	pad := width - headerWidth
+	if pad < 2 {
+		pad = 2
+	}
+	header := dividerStyle.Render("─") + headerText + dividerStyle.Render(strings.Repeat("─", pad-1))
 
 	items := []struct{ key, desc string }{
 		{"ctrl+n", "Cycle notifications (all/@mentions/off)"},
+		{"ctrl+t", "Toggle online users list"},
 		{"enter", "Send message"},
 		{"ctrl+u", "Scroll up (half page)"},
 		{"ctrl+d", "Scroll down (half page)"},
@@ -335,6 +343,42 @@ func helpPanel(width int) string {
 	}
 
 	return header + "\n" + body + dividerStyle.Render(strings.Repeat("─", width))
+}
+
+// buildUserListContent renders the online users list as viewport content
+// (same format as the chat log).
+func buildUserListContent(width int, lastSeen map[string]peerInfo, osIconMode string) string {
+	now := time.Now()
+	type entry struct {
+		username, team string
+	}
+	var users []entry
+	for username, info := range lastSeen {
+		if now.Sub(info.lastSeen) < peerWindow {
+			users = append(users, entry{username, info.team})
+		}
+	}
+	sort.Slice(users, func(i, j int) bool {
+		return strings.ToLower(users[i].username) < strings.ToLower(users[j].username)
+	})
+
+	header := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FBBF24")).
+		Render(fmt.Sprintf("   Online Users (%d)", len(users)))
+
+	var sb strings.Builder
+	sb.WriteString(header + "\n\n")
+	for _, u := range users {
+		teamPart := ""
+		if u.team != "" {
+			teamPart = teamStyle(u.team).Render(" " + u.team)
+		}
+		sb.WriteString(fmt.Sprintf("  %s%s\n", u.username, teamPart))
+	}
+	sb.WriteString("\n" + dividerStyle.Render(strings.Repeat("─", width)))
+
+	return sb.String()
 }
 
 func wrapText(text string, width int) string {
