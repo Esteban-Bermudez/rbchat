@@ -17,12 +17,6 @@ Installs to `~/.local/bin/rbchat`. Make sure `~/.local/bin` is on your `PATH` (a
 
 > **macOS Gatekeeper**: The binary isn't signed with an Apple Developer certificate. On first run, macOS may show "rbchat cannot be opened because it is not from an identified developer." To bypass: right-click the file in Finder → Open, or run `xattr -rd com.apple.quarantine ~/.local/bin/rbchat`.
 
-### From source
-
-```sh
-go install github.com/esteban/rbchat/cmd/rbchat@latest
-```
-
 ### From a release
 
 Download the binary for your platform from the [releases page](https://github.com/esteban/rbchat/releases), make it executable, and run it.
