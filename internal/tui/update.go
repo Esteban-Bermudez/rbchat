@@ -21,6 +21,7 @@ const (
 	syncTimeout       = 2 * time.Second
 	peerWindow        = 60 * time.Second
 	heartbeatInterval = 30 * time.Second
+	replayWindow      = 60 * time.Second
 	multicastAddr     = "224.0.0.1:9999"
 	helpHeight        = 9
 )
@@ -264,10 +265,28 @@ func (m *Model) respondToSync() {
 	}
 }
 
+// isFreshMessage reports whether the message's timestamp is within the
+// replay window. Stale messages are likely replays. Sync replays (which
+// carry Replay: true) are exempt — they include their original timestamp.
+func isFreshMessage(msg network.Message) bool {
+	t, err := time.Parse(time.RFC3339, msg.Timestamp)
+	if err != nil {
+		return false
+	}
+	return time.Since(t) < replayWindow
+}
+
 // handleIncoming processes an inbound network message, updating the message
 // list, peer state, and mention banner as appropriate.
 func (m *Model) handleIncoming(msg network.Message) {
 	if m.networkID != "" && msg.NetworkID != "" && msg.NetworkID != m.networkID {
+		return
+	}
+
+	// Reject stale non-replay messages — they're likely replays of previously
+	// captured traffic. The timestamp is inside the signed payload so an
+	// attacker cannot modify it without invalidating the signature.
+	if !msg.Replay && !isFreshMessage(msg) {
 		return
 	}
 
