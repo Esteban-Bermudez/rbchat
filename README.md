@@ -44,13 +44,21 @@ Pass `--no-notify` at startup to disable notifications entirely.
 
 ### Notifications on macOS
 
-rbchat uses macOS's native notification system via `osascript`. On first run your terminal app (Terminal / iTerm2) may need notification permission:
+For reliable notifications in every terminal (Terminal.app, iTerm2, Warp, …), install [alerter](https://github.com/vjeantet/alerter):
+
+```sh
+brew install vjeantet/tap/alerter
+```
+
+rbchat uses `alerter` when it's available and falls back to the terminal's native notification system (`terminal-notifier` / `osascript`) otherwise.
+
+On first run the notifier may need permission:
 
 1. Open **System Settings → Notifications**
-2. Find your terminal app in the list
-3. Toggle **Allow Notifications** on
+2. Find **alerter** (or your terminal app) in the list
+3. Toggle **Allow Notifications** on and set the alert style to **Banners** or **Alerts**
 
-If you miss the prompt, the setting is under **System Settings → Privacy & Security → Notifications**.
+If you miss the prompt, the setting is under **System Settings → Privacy & Security → Notifications**. Note that an active **Focus / Do Not Disturb** mode suppresses banners and sounds (notifications still collect in Notification Center).
 
 ### Teams
 

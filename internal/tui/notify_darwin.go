@@ -5,25 +5,28 @@ package tui
 import (
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/gen2brain/beeep"
 )
 
-// macOS attributes notifications posted by a CLI process to the "responsible"
-// GUI app via the __CFBundleIdentifier environment variable. Inside Apple
-// Terminal that resolves to com.apple.Terminal, which usually has no
-// notification permission, so banners are silently dropped. (This is why
-// notifications work in Warp/iTerm but not Terminal.app: those terminals are
-// granted permission, Terminal.app is not.) Clearing the variable at startup
-// lets the notifier post under its own permitted bundle identity, so
-// notifications work consistently in every terminal.
+// alerterTimeout auto-closes the notification after this many seconds so the
+// alerter process exits instead of lingering until the user clicks the alert.
+const alerterTimeout = 10
+
 func init() {
+	// macOS attributes a notification posted by a CLI to the "responsible" GUI
+	// app via the __CFBundleIdentifier env var. Inside Apple Terminal that
+	// resolves to com.apple.Terminal, which usually has no notification
+	// permission, so the beeep/osascript fallback is silently dropped (this is
+	// why notifications work in Warp/iTerm but not Terminal.app). Clearing it
+	// lets the fallback post under its own permitted bundle identity.
 	os.Unsetenv("__CFBundleIdentifier")
 
-	// terminal-notifier is normally installed via Homebrew. Make sure its
-	// location is searchable even when rbchat is launched with a minimal PATH,
-	// otherwise we silently fall back to the (blocked) osascript path.
+	// alerter (and terminal-notifier, used by beeep) are normally installed via
+	// Homebrew. Make sure their location is searchable even when rbchat is
+	// launched with a minimal PATH.
 	ensurePATH("/opt/homebrew/bin", "/usr/local/bin")
 }
 
@@ -44,16 +47,25 @@ func ensurePATH(dirs ...string) {
 	os.Setenv("PATH", strings.Join(entries, sep))
 }
 
-// sendNotification posts a desktop notification. It prefers terminal-notifier,
-// which posts under its own bundle identity and shows reliably regardless of
-// the host terminal; it falls back to beeep (osascript) when terminal-notifier
-// is not installed. "-sound default" asks macOS to play the default alert
-// sound; whether it actually plays (and whether a banner is shown) still
-// depends on the notification style granted to terminal-notifier in
-// System Settings → Notifications.
+// sendNotification posts a desktop notification. It prefers alerter, an actively
+// maintained alternative to the (unmaintained) terminal-notifier that beeep
+// falls back on; alerter posts through the modern UserNotifications API so
+// banners show reliably regardless of the host terminal. When alerter is not
+// installed it falls back to beeep (terminal-notifier -> osascript).
+//
+// alerter stays alive until the alert is dismissed or times out, so it is
+// started in the background (and reaped in a goroutine) to avoid stalling the
+// TUI update loop.
 func sendNotification(title, text string) {
-	if path, err := exec.LookPath("terminal-notifier"); err == nil {
-		if err := exec.Command(path, "-title", title, "-message", text, "-sound", "default").Run(); err == nil {
+	if path, err := exec.LookPath("alerter"); err == nil {
+		cmd := exec.Command(path,
+			"--title", title,
+			"--message", text,
+			"--sound", "default",
+			"--timeout", strconv.Itoa(alerterTimeout),
+		)
+		if err := cmd.Start(); err == nil {
+			go cmd.Wait()
 			return
 		}
 	}
