@@ -155,7 +155,9 @@ func (m Model) View() string {
 		bell = bellOffStyle.Render("🔕")
 	}
 	var versionStr string
-	if m.version == "" || m.version == "dev" {
+	if m.updateAvailable != "" {
+		versionStr = fmt.Sprintf("⬆ %s — rbchat update", m.updateAvailable)
+	} else if m.version == "" || m.version == "dev" {
 		versionStr = "dev"
 	} else {
 		versionStr = "v" + m.version

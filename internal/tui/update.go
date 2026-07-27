@@ -44,6 +44,7 @@ func (m Model) Init() tea.Cmd {
 		tea.Tick(syncTimeout, func(t time.Time) tea.Msg {
 			return SyncTimeoutMsg{}
 		}),
+		CheckForUpdate(m.version),
 	)
 }
 
@@ -190,6 +191,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case SyncResponseMsg:
 		m.respondToSync()
 		return m, WaitForNetworkMsg(m.msgCh)
+
+	case VersionCheckResultMsg:
+		if msg.Available {
+			m.updateAvailable = msg.LatestVersion
+		}
+		return m, nil
 
 	case SyncTimeoutMsg:
 		m.syncing = false
