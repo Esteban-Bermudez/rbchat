@@ -117,9 +117,10 @@ type Model struct {
 	mentionBy            string
 	syncLastResponse     map[string]time.Time
 	updateAvailable      string
+	signingDisabled      bool
 }
 
-func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID, version string, osIconMode string) Model {
+func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID, version string, osIconMode string, signingDisabled bool) Model {
 	notificationMode := NotifyAll
 	if !notificationsEnabled {
 		notificationMode = NotifyNone
@@ -191,5 +192,6 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 		networkID:            networkID,
 		version:              version,
 		syncLastResponse:     make(map[string]time.Time),
+		signingDisabled:      signingDisabled,
 	}
 }
