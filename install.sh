@@ -68,12 +68,12 @@ download_and_install() {
       CHECK_CMD="sha256sum -c"
       EXPECTED=$(grep "$ARCHIVE" checksums.txt | cut -d' ' -f1)
       COMPUTED=$(sha256sum "$ARCHIVE" | cut -d' ' -f1)
-      [ "$EXPECTED" = "$COMPUTED" ] || echo "Warning: checksum mismatch"
+      [ "$EXPECTED" = "$COMPUTED" ] || { echo "Error: checksum mismatch — aborting installation."; exit 1; }
     elif command -v shasum >/dev/null 2>&1; then
       CHECK_CMD="shasum -a 256 -c"
       EXPECTED=$(grep "$ARCHIVE" checksums.txt | cut -d' ' -f1)
       COMPUTED=$(shasum -a 256 "$ARCHIVE" | cut -d' ' -f1)
-      [ "$EXPECTED" = "$COMPUTED" ] || echo "Warning: checksum mismatch"
+      [ "$EXPECTED" = "$COMPUTED" ] || { echo "Error: checksum mismatch — aborting installation."; exit 1; }
     fi
   fi
 
