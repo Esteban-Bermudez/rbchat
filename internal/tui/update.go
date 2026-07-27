@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"math/rand"
 	"regexp"
 	"runtime"
 	"sort"
@@ -169,8 +170,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case IncomingNetworkMsg:
 		m.handleIncoming(msg.Message)
 		if msg.Message.Type == "sync" && msg.Message.Text == "sync_request" {
-			m.respondToSync()
+			cmds := []tea.Cmd{WaitForNetworkMsg(m.msgCh)}
+			if from := msg.From; from != nil {
+				sourceKey := from.IP.String()
+				const syncCooldown = 30 * time.Second
+				last, limited := m.syncLastResponse[sourceKey]
+				if !limited || time.Since(last) > syncCooldown {
+					m.syncLastResponse[sourceKey] = time.Now()
+					jitter := time.Duration(rand.Intn(1500)) * time.Millisecond
+					cmds = append(cmds, tea.Tick(jitter, func(t time.Time) tea.Msg {
+						return SyncResponseMsg{SourceKey: sourceKey}
+					}))
+				}
+			}
+			return m, tea.Batch(cmds...)
 		}
+		return m, WaitForNetworkMsg(m.msgCh)
+
+	case SyncResponseMsg:
+		m.respondToSync()
 		return m, WaitForNetworkMsg(m.msgCh)
 
 	case SyncTimeoutMsg:

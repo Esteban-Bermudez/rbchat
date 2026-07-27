@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"database/sql"
+	"net"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -53,12 +54,20 @@ func (n NotificationMode) Next() NotificationMode {
 
 type IncomingNetworkMsg struct {
 	Message network.Message
+	From    *net.UDPAddr
 }
 
 type SyncTimeoutMsg struct{}
 
 // HeartbeatTickMsg is sent periodically to broadcast a presence announcement.
 type HeartbeatTickMsg struct{}
+
+// SyncResponseMsg is sent after a random jitter delay to respond to a sync
+// request from a specific source. The delay spreads out responses so peers
+// don't all reply at the same millisecond.
+type SyncResponseMsg struct {
+	SourceKey string
+}
 
 type SendFailedMsg struct {
 	Err error
@@ -70,7 +79,7 @@ func WaitForNetworkMsg(ch <-chan network.IncomingMessage) tea.Cmd {
 		if !ok {
 			return nil
 		}
-		return IncomingNetworkMsg{Message: incoming.Message}
+		return IncomingNetworkMsg{Message: incoming.Message, From: incoming.From}
 	}
 }
 
@@ -106,6 +115,7 @@ type Model struct {
 	version              string
 	osIconMode           string
 	mentionBy            string
+	syncLastResponse     map[string]time.Time
 }
 
 func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID, version string, osIconMode string) Model {
@@ -179,5 +189,6 @@ func NewModel(database *sql.DB, username, team string, listener *network.Listene
 		otherInstanceRunning: otherInstanceRunning,
 		networkID:            networkID,
 		version:              version,
+		syncLastResponse:     make(map[string]time.Time),
 	}
 }
