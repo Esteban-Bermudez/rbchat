@@ -179,7 +179,7 @@ func main() {
 		q.SetConfig(ctx, db.SetConfigParams{Key: "os_icons", Value: osIconMode})
 	}
 
-	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel, notificationsEnabled, otherInstanceRunning, networkID, version, osIconMode)
+	model := tui.NewModel(database, username, team, listener, broadcaster, msgCh, ctx, cancel, notificationsEnabled, otherInstanceRunning, networkID, version, osIconMode, !network.SigningEnabled())
 
 	go listener.Listen(ctx, msgCh)
 

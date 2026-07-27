@@ -54,6 +54,11 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color("#FFF")).
 			Background(lipgloss.Color("#EF4444"))
+
+	insecureStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#FFF")).
+			Background(lipgloss.Color("#F59E0B"))
 )
 
 var (
@@ -186,6 +191,14 @@ func (m Model) View() string {
 	out := title + chatContent + "\n" + inputField
 	if banner := m.mentionBanner(); banner != "" {
 		out = banner + "\n" + out
+	}
+	if m.signingDisabled {
+		text := " ⚠ Message signing is disabled — set RBCHAT_INSECURE=1 only for local development "
+		style := insecureStyle
+		if m.viewport.Width > 0 {
+			style = style.Width(m.viewport.Width)
+		}
+		out = style.Render(text) + "\n" + out
 	}
 	return out
 }

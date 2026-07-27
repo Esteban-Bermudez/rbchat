@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"os"
 )
 
 var obfuscatedSecret []byte
@@ -52,7 +53,9 @@ func (m *Message) Sign() {
 func (m *Message) Verify() bool {
 	s := signingSecret()
 	if len(s) == 0 {
-		return true
+		// Fail closed: without a signing secret, all traffic is rejected
+		// unless RBCHAT_INSECURE=1 is set for local development.
+		return os.Getenv("RBCHAT_INSECURE") == "1"
 	}
 	h := hmac.New(sha256.New, s)
 	h.Write([]byte(m.MessageID))
