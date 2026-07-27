@@ -1,0 +1,4 @@
+- [X] Set new signing secret
+- [X] Add notification option for mentions only.
+- [] Use apple script for notifications.
+- [X] Add heartbeat messages to see an accurate count of users

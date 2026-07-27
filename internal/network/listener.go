@@ -15,7 +15,8 @@ func NewListener(addr string) (*Listener, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn, err := net.ListenMulticastUDP("udp", nil, udpAddr)
+	iface := DefaultInterface()
+	conn, err := net.ListenMulticastUDP("udp", iface, udpAddr)
 	if err != nil {
 		return nil, err
 	}

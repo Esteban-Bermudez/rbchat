@@ -162,6 +162,46 @@ func parseARPMac(output string) string {
 	return ""
 }
 
+// DefaultInterface returns the network interface whose subnet contains
+// the default gateway, or nil if it can't be determined. This is the
+// interface facing your router — not a Docker/WSL/VPN virtual adapter.
+func DefaultInterface() *net.Interface {
+	gw, err := defaultGateway()
+	if err != nil {
+		return nil
+	}
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return nil
+	}
+	for _, iface := range interfaces {
+		if iface.Flags&net.FlagUp == 0 {
+			continue
+		}
+		if iface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			ipnet, ok := addr.(*net.IPNet)
+			if !ok {
+				continue
+			}
+			// Skip IPv6 addresses — gateways are IPv4
+			if ipnet.IP.To4() == nil {
+				continue
+			}
+			if ipnet.Contains(gw) {
+				return &iface
+			}
+		}
+	}
+	return nil
+}
+
 func isValidMAC(mac string) bool {
 	if strings.Count(mac, ":") != 5 && strings.Count(mac, "-") != 5 {
 		return false

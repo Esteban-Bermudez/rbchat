@@ -40,6 +40,26 @@ On first launch you'll be prompted for a username and team. After that, you're i
 
 Pass `--no-notify` at startup to disable notifications entirely.
 
+### Windows Firewall (important for Windows users)
+
+rbchat listens for incoming messages on UDP port `9999`. Windows Defender Firewall
+blocks inbound UDP by default, which prevents other machines on the LAN from reaching
+your rbchat instance. You'll need to add a rule to allow it:
+
+```powershell
+# Allow rbchat on UDP port 9999 (run as Administrator once)
+netsh advfirewall firewall add rule name="rbchat" dir=in action=allow protocol=udp localport=9999
+```
+
+To remove the rule later:
+
+```powershell
+netsh advfirewall firewall delete rule name="rbchat"
+```
+
+> **Why not a different port?** The firewall blocks inbound UDP on *all* ports by
+default — changing the port number doesn't help. You need a firewall rule either way.
+
 ### Mentions
 
 Type `@username` in a message to mention someone. When they receive it, a banner appears at the top of their terminal — `🔔 <you> mentioned you in a message` — and stays until they send a message or press Esc. Matching is case-insensitive and requires a word boundary, so `@matt` won't fire for `@matthew`. Mentions work regardless of whether desktop notifications are enabled.

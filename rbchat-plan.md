@@ -89,7 +89,7 @@ The UI is managed by Bubble Tea's state machine, rendering distinct styled regio
 
 ```text
 ┌────────────────────────────────────────────────────────────────┐
-│  rbchat | 224.0.0.1:9999 | 🔔 | 3 peers                      │  ← purple title bar
+│  rbchat | 239.255.0.1:9999 | 🔔 | 3 peers                      │  ← purple title bar
 ├────────────────────────────────────────────────────────────────┤
 │                                                                │
 │  [Jun 24 14:30] Esteban (Paved): Has anyone seen the new docs?  │

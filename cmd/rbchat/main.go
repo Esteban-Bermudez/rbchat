@@ -15,7 +15,7 @@ import (
 	"github.com/esteban/rbchat/internal/tui"
 )
 
-const multicastAddr = "224.0.0.1:9999"
+const multicastAddr = "239.255.0.1:9999"
 
 var (
 	rbchatSecret    string

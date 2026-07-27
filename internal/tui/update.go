@@ -22,7 +22,7 @@ const (
 	peerWindow        = 60 * time.Second
 	heartbeatInterval = 30 * time.Second
 	replayWindow      = 60 * time.Second
-	multicastAddr     = "224.0.0.1:9999"
+	multicastAddr     = "239.255.0.1:9999"
 	helpHeight        = 9
 )
 
