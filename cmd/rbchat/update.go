@@ -7,7 +7,7 @@ import (
 	"runtime"
 )
 
-const installScriptURL = "https://raw.githubusercontent.com/Esteban-Bermudez/rbchat/main/install.sh"
+const installScriptBaseURL = "https://raw.githubusercontent.com/Esteban-Bermudez/rbchat"
 
 const releaseURL = "https://github.com/Esteban-Bermudez/rbchat/releases/latest"
 
@@ -19,6 +19,13 @@ func cmdUpdate() {
 			return
 		}
 	}
+
+	ref := version
+	if ref == "" || ref == "dev" {
+		fmt.Fprintf(os.Stderr, "Warning: dev build, fetching install script from 'main' branch\n")
+		ref = "main"
+	}
+	installScriptURL := installScriptBaseURL + "/" + ref + "/install.sh"
 
 	cmd := exec.Command("sh", "-c", "curl -sfL "+installScriptURL+" | sh")
 	cmd.Stdout = os.Stdout
