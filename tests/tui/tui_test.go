@@ -26,7 +26,7 @@ func TestTitleShowsHelpHint(t *testing.T) {
 	defer database.Close()
 	ctx := context.Background()
 
-	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "", "1.2.2", "nerd")
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "", "1.2.2", "nerd", false)
 	updated, _ := model.Update(tea.WindowSizeMsg{Width: 120, Height: 24})
 	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
 
@@ -127,7 +127,7 @@ func TestNewModelOnlyRendersMessagesMatchingNetworkID(t *testing.T) {
 	insertMessage(t, q, ctx, home)
 	insertMessage(t, q, ctx, untagged)
 
-	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "office-net", "dev", "nerd")
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "office-net", "dev", "nerd", false)
 	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
 	view := updated.View()
@@ -186,7 +186,7 @@ func TestNewModelOnlyRendersMessagesSignedWithCurrentSecret(t *testing.T) {
 		MessageID: "unsigned-message",
 	})
 
-	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "", "dev", "nerd")
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, true, true, "", "dev", "nerd", false)
 	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
 	view := updated.View()
@@ -203,11 +203,13 @@ func TestNewModelOnlyRendersMessagesSignedWithCurrentSecret(t *testing.T) {
 }
 
 func TestIncomingChatMentionFlashesBanner(t *testing.T) {
+	network.SetSecret("test")
+	t.Cleanup(func() { network.SetSecret("") })
 	database := setupDB(t)
 	defer database.Close()
 	ctx := context.Background()
 
-	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, false, true, "", "dev", "off")
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, false, true, "", "dev", "off", false)
 	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
 
@@ -231,11 +233,13 @@ func TestIncomingChatMentionFlashesBanner(t *testing.T) {
 }
 
 func TestChatWithoutMentionDoesNotFlash(t *testing.T) {
+	network.SetSecret("test")
+	t.Cleanup(func() { network.SetSecret("") })
 	database := setupDB(t)
 	defer database.Close()
 	ctx := context.Background()
 
-	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, false, true, "", "dev", "off")
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, false, true, "", "dev", "off", false)
 	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
 
@@ -255,11 +259,13 @@ func TestChatWithoutMentionDoesNotFlash(t *testing.T) {
 }
 
 func TestMentionBannerClearsOnEsc(t *testing.T) {
+	network.SetSecret("test")
+	t.Cleanup(func() { network.SetSecret("") })
 	database := setupDB(t)
 	defer database.Close()
 	ctx := context.Background()
 
-	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, false, true, "", "dev", "off")
+	model := tui.NewModel(database, "me", "Redbrick", nil, nil, nil, ctx, func() {}, false, true, "", "dev", "off", false)
 	updated, _ := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	updated, _ = updated.Update(tui.SyncTimeoutMsg{})
 
