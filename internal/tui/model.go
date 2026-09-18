@@ -119,6 +119,9 @@ type Model struct {
 	syncLastResponse     map[string]time.Time
 	updateAvailable      string
 	signingDisabled      bool
+	suggestions          []string
+	suggestionIdx        int
+	suggestionHeight     int
 }
 
 func NewModel(database *sql.DB, username, team string, listener *network.Listener, broadcaster *network.Broadcaster, msgCh chan network.IncomingMessage, ctx context.Context, cancel context.CancelFunc, notificationsEnabled bool, otherInstanceRunning bool, networkID, version string, osIconMode string, signingDisabled bool) Model {

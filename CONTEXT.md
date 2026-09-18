@@ -11,6 +11,13 @@ A User is mentioned by including `@<their-username>` in a chat message. On recei
 
 The banner (`Model.mentionBy`) stays up until the User acts: it clears when they send a message or press Esc. A later @mention simply replaces the current one.
 
+### Suggestion picker
+Typing `@` in the input opens a picker above the message box (`Model.suggestions`, rendered by `suggestionPopup`). `MentionPrefix` reads the partial mention from the text left of the cursor — requiring `@` to start a word, so `matt@rdbrck` is left alone — and `MatchUsernames` filters against it case-insensitively, capped at `maxSuggestions` (5) and sorted alphabetically.
+
+Candidates come from `onlinePeers`: usernames in `Model.lastSeen` within `peerWindow`, minus the local user. A peer who has not been heard from in the last 60s is not offered, so the list can be empty on a cold start until heartbeats arrive.
+
+The first match is highlighted, so Enter completes rather than sends while the picker is open. ↑/↓ move through the list and wrap; Tab and Enter complete (inserting the username plus a trailing space); Esc closes the picker without touching the typed text. The picker borrows its rows from the viewport (`resizeForSuggestions`) the same way the help panel reserves `helpHeight`, keeping the total render inside the terminal.
+
 Matching (`mentionsUser`) is case-insensitive: each whitespace-separated word is compared to `@<username>` after trimming surrounding punctuation, so `@matt` matches, but `@matthew` and `email@matt` do not. Mentions in the User's own messages and in replayed history are never flashed. The banner is independent of the desktop-notification toggle (Ctrl+N).
 
 ## Title bar

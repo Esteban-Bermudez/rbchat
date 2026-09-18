@@ -24,7 +24,7 @@ const (
 	heartbeatInterval = 30 * time.Second
 	replayWindow      = 60 * time.Second
 	multicastAddr     = "239.255.0.1:9999"
-	helpHeight        = 9
+	helpHeight        = 10
 )
 
 func (m Model) Init() tea.Cmd {
@@ -55,6 +55,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.showHelp {
 			vpHeight -= helpHeight
 		}
+		vpHeight -= m.suggestionHeight
 		if !m.ready {
 			m.viewport = viewport.New(msg.Width, vpHeight)
 			m.viewport.YPosition = 0
@@ -69,6 +70,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		if m.quitting {
 			return m, tea.Quit
+		}
+		if m.handleSuggestionKey(msg.String()) {
+			return m, nil
 		}
 		switch msg.String() {
 		case "ctrl+c":
@@ -164,6 +168,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !m.syncing {
 			var cmd tea.Cmd
 			m.input, cmd = m.input.Update(msg)
+			m.refreshSuggestions()
 			return m, cmd
 		}
 		return m, nil

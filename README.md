@@ -36,7 +36,9 @@ On first launch you'll be prompted for a username and team. After that, you're i
 | Enter | Send message |
 | Ctrl+C | Quit |
 | Ctrl+N | Toggle desktop notifications on/off |
-| Esc | Dismiss @mention banner |
+| ↑ / ↓ | Move through @mention suggestions |
+| Tab | Complete the highlighted @mention |
+| Esc | Dismiss @mention suggestions, or the @mention banner |
 
 Pass `--no-notify` at startup to disable notifications entirely.
 
@@ -62,7 +64,9 @@ default — changing the port number doesn't help. You need a firewall rule eith
 
 ### Mentions
 
-Type `@username` in a message to mention someone. When they receive it, a banner appears at the top of their terminal — `🔔 <you> mentioned you in a message` — and stays until they send a message or press Esc. Matching is case-insensitive and requires a word boundary, so `@matt` won't fire for `@matthew`. Mentions work regardless of whether desktop notifications are enabled.
+Type `@` in the message box to open a picker listing everyone currently online, filtered as you keep typing. Move through it with ↑/↓ and press Tab or Enter to complete the highlighted name; Esc closes it and leaves what you typed alone. While the picker is open Enter completes rather than sends, so dismiss it first if you meant to send a partial name.
+
+Once sent, `@username` mentions someone. When they receive it, a banner appears at the top of their terminal — `🔔 <you> mentioned you in a message` — and stays until they send a message or press Esc. Matching is case-insensitive and requires a word boundary, so `@matt` won't fire for `@matthew`. Mentions work regardless of whether desktop notifications are enabled.
 
 ### Notifications on macOS
 

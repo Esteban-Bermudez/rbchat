@@ -108,6 +108,7 @@ Key layout details:
 - All styled with lipgloss; title uses purple background (#7C3AED) spanning the full line width
 - The bell emoji is a separate styled segment to avoid ANSI-reset gaps
 - Help text below input shows available shortcuts
+- Typing `@` opens a keyboard-navigable suggestion picker above the input, listing online peers (see CONTEXT.md)
 - Ctrl+N toggles desktop notifications; can also be disabled at startup with `--no-notify`
 
 ## Implementation Phases

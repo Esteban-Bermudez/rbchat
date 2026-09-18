@@ -59,6 +59,18 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color("#FFF")).
 			Background(lipgloss.Color("#F59E0B"))
+
+	suggestionStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#E0E0E0"))
+
+	suggestionSelectedStyle = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#FFF")).
+				Background(lipgloss.Color("#3B82F6"))
+
+	suggestionLabelStyle = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#FBBF24"))
 )
 
 var (
@@ -184,6 +196,9 @@ func (m Model) View() string {
 	if m.err != nil {
 		inputField = errorStyle.Render(fmt.Sprintf("⚠ %v", m.err)) + "\n"
 	}
+	if popup := m.suggestionPopup(); popup != "" {
+		inputField += popup + "\n"
+	}
 	inputField += m.input.View()
 	if m.showHelp {
 		inputField += "\n" + helpPanel(m.viewport.Width)
@@ -202,6 +217,48 @@ func (m Model) View() string {
 		out = style.Render(text) + "\n" + out
 	}
 	return out
+}
+
+// suggestionPopup renders the @mention picker sitting above the input, or ""
+// when no mention is in progress. Its height must match resizeForSuggestions.
+func (m Model) suggestionPopup() string {
+	if len(m.suggestions) == 0 {
+		return ""
+	}
+	width := m.viewport.Width
+	if width <= 0 {
+		width = 60
+	}
+
+	label := suggestionLabelStyle.Render(" @mention ")
+	hint := helpStyle.Render(" \u2191\u2193 navigate \u00b7 tab/enter complete \u00b7 esc dismiss ")
+	dashes := width - lipgloss.Width(label) - lipgloss.Width(hint) - 1
+	if dashes < 1 {
+		dashes = 1
+	}
+	lines := []string{
+		dividerStyle.Render("\u2500") + label +
+			dividerStyle.Render(strings.Repeat("\u2500", dashes)) + hint,
+	}
+
+	for i, name := range m.suggestions {
+		team := m.lastSeen[name].team
+		if i == m.suggestionIdx {
+			// Selected row is a solid bar — a team colour would fight it.
+			entry := "  @" + name
+			if team != "" {
+				entry += "  " + team
+			}
+			lines = append(lines, suggestionSelectedStyle.Width(width).Render(entry))
+			continue
+		}
+		entry := suggestionStyle.Render("  @" + name)
+		if team != "" {
+			entry += teamStyle(team).Render("  " + team)
+		}
+		lines = append(lines, entry)
+	}
+	return strings.Join(lines, "\n")
 }
 
 // mentionBanner renders the "@ mentioned you" line shown at the top of the
@@ -337,11 +394,12 @@ func helpPanel(width int) string {
 		{"ctrl+n", "Cycle notifications (all/@mentions/off)"},
 		{"ctrl+t", "Toggle online users list"},
 		{"enter", "Send message"},
+		{"@", "Mention someone (\u2191\u2193 navigate, tab/enter complete)"},
 		{"ctrl+u", "Scroll up (half page)"},
 		{"ctrl+d", "Scroll down (half page)"},
 		{"pgup", "Page up"},
 		{"pgdown", "Page down"},
-		{"esc", "Dismiss @mention banner"},
+		{"esc", "Dismiss suggestions or @mention banner"},
 		{"ctrl+c", "Quit"},
 		{"?", "Close this help"},
 	}
